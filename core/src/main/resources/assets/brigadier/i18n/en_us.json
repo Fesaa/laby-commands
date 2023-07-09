@@ -1,0 +1,10 @@
+{
+  "Brigadier": {
+    "settings": {
+      "name": "TEST",
+      "enabled": {
+        "name": "Enabled"
+      }
+    }
+  }
+}
