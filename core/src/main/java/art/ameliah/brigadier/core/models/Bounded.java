@@ -5,6 +5,18 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Limit the range on Integers, Floats and Doubles.
+ * Be wary to use the correct attribute
+ * <pre>
+ * {@code
+ * @Command
+ * public boolean myCommand(CommandContext ctx, @Bounded(min_int = 0) int count) {
+ *   <code>
+ * }
+ * }
+ * </pre>
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface Bounded {

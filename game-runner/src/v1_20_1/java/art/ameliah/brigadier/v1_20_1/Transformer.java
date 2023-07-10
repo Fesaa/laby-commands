@@ -48,6 +48,14 @@ public class Transformer {
     for (int i = 0; i < size; i++) {
       Parameter parameter = parameters[i];
 
+      if (i == 0 && !parameter.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class)) {
+        throw new CommandException("First argument must be CommandContext");
+      }
+
+      if (parameter.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class) && i != 0) {
+        throw new CommandException("CommandContext must be the first argument");
+      }
+
       if (parameter.isAnnotationPresent(Greedy.class)) {
         if (i != size - 1) {
           throw new CommandException("Greedy can only be used on the last argument.");
