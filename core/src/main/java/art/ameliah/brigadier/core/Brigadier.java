@@ -1,8 +1,6 @@
 package art.ameliah.brigadier.core;
 
-import art.ameliah.brigadier.core.events.tick;
-import art.ameliah.brigadier.core.generated.DefaultReferenceStorage;
-import art.ameliah.brigadier.core.linkers.BrigadierLinker;
+import art.ameliah.brigadier.core.commands.TestCommands;
 import net.labymod.api.addon.LabyAddon;
 import net.labymod.api.models.addon.annotation.AddonMain;
 
@@ -14,12 +12,7 @@ public class Brigadier extends LabyAddon<BrigadierConfig> {
   protected void enable() {
     this.registerSettingCategory();
 
-    DefaultReferenceStorage referenceStorage = this.referenceStorageAccessor();
-
-    BrigadierLinker link = referenceStorage.getBrigadierLinker();
-    if (link != null) {
-      this.registerListener(new tick(link));
-    }
+    CommandService.registerCommand(new TestCommands());
 
     this.logger().info("Enabled the Addon");
   }

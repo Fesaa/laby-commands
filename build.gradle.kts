@@ -39,6 +39,10 @@ labyMod {
     }
 }
 
+tasks.compileJava {
+    options.compilerArgs.add("-parameters");
+}
+
 subprojects {
     plugins.apply("java-library")
     plugins.apply("net.labymod.gradle")
