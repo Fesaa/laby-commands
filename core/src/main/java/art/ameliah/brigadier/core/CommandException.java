@@ -11,4 +11,8 @@ public class CommandException extends Exception {
     super(msg);
   }
 
+  public CommandException(String msg, Object... args) {
+    super(String.format(msg, args));
+  }
+
 }

@@ -3,17 +3,15 @@ package art.ameliah.brigadier.v1_20_1;
 import art.ameliah.brigadier.core.models.CommandContext;
 import java.lang.reflect.Parameter;
 import java.util.Collection;
-import net.labymod.api.Laby;
-import net.labymod.api.LabyAPI;
+import net.labymod.api.util.math.vector.FloatVector3;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public class VersionedCommandContext extends CommandContext {
 
   private final com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx;
   private final Parameter parameter;
-  private final LabyAPI api = Laby.labyAPI();
-
 
   public VersionedCommandContext(
       com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx) {
@@ -54,5 +52,11 @@ public class VersionedCommandContext extends CommandContext {
   @Override
   public Collection<String> getOnlinePlayerNames() {
     return this.ctx.getSource().getOnlinePlayerNames();
+  }
+
+  @Override
+  public FloatVector3 getPosition() {
+    Vec3 pos = this.ctx.getSource().getPosition();
+    return new FloatVector3((float) pos.x, (float) pos.y, (float) pos.z);
   }
 }

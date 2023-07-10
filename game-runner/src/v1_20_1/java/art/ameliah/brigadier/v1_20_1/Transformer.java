@@ -43,40 +43,49 @@ public class Transformer {
   private static void validateMethod(Method method) throws CommandException {
     Parameter[] parameters = method.getParameters();
     int size = parameters.length;
+    if (size == 0) {
+      throw new CommandException(
+          "Commands must include, and start with, an argument with type CommandContext. (%s)",
+          method);
+    }
+
     boolean hasPassedOptional = false;
     for (int i = 0; i < size; i++) {
       Parameter parameter = parameters[i];
 
       if (i == 0 && !parameter.getType()
           .equals(art.ameliah.brigadier.core.models.CommandContext.class)) {
-        throw new CommandException("First argument must be CommandContext");
+        throw new CommandException("First argument must be CommandContext. (%s)", method);
       }
 
       if (parameter.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class)
           && i != 0) {
-        throw new CommandException("CommandContext must be the first argument");
+        throw new CommandException("CommandContext can only be used as the first argument. (%s)",
+            method);
       }
 
       if (parameter.isAnnotationPresent(Greedy.class)) {
         if (i != size - 1) {
-          throw new CommandException("Greedy can only be used on the last argument.");
+          throw new CommandException("Greedy can only be used on the last argument. (%s)", method);
         }
         if (!parameter.getType().equals(String.class)) {
-          throw new CommandException("Greedy can only be used on Strings.");
+          throw new CommandException("Greedy can only be used on Strings. (%s)", method);
         }
       }
 
       if (parameter.isAnnotationPresent(Optional.class)) {
         hasPassedOptional = true;
       } else if (hasPassedOptional) {
-        throw new CommandException("Not optional argument cannot come after an optional one.");
+        throw new CommandException(
+            "Optional arguments can only be succeeded by optional arguments. (%s)", method);
       }
 
       if (parameter.isAnnotationPresent(Bounded.class) &&
           !(Utils.typeIsFloat(parameter.getType()) ||
               Utils.typeIsDouble(parameter.getType()) ||
               Utils.typeIsInt(parameter.getType()))) {
-        throw new CommandException("Bounded can only be used on Integers, Floats and Doubles.");
+        throw new CommandException("Bounded can only be used on Integers, Floats and Doubles. (%s)",
+            method);
       }
     }
   }
@@ -104,31 +113,28 @@ public class Transformer {
 
   private static int commandEval(Method method, Object commandClass,
       CommandContext<CommandSourceStack> ctx) {
+    List<Object> values = new ArrayList<>();
+    values.add(new VersionedCommandContext(ctx));
+    Arrays.stream(method.getParameters())
+        .filter(
+            par -> !par.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class))
+        .forEach(par -> {
+          try {
+            Object obj = ctx.getArgument(par.getName(), par.getType());
+            values.add(obj);
+          } catch (IllegalArgumentException ignored) {
+            values.add(null);
+          }
+        });
+    Object re;
     try {
-      List<Object> values = new ArrayList<>();
-      values.add(new VersionedCommandContext(ctx));
-      Arrays.stream(method.getParameters())
-          .filter(
-              par -> !par.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class))
-          .forEach(par -> {
-            try {
-              Object obj = ctx.getArgument(par.getName(), par.getType());
-              values.add(obj);
-            } catch (IllegalArgumentException ignored) {
-              values.add(null);
-            }
-          });
-
-      Object re = values.size() == 0
-          ? method.invoke(commandClass)
-          : method.invoke(commandClass, values.toArray());
-
-      return Utils.typeIsBool(re.getClass()) ? (Boolean) re ? 1 : 0 : 0;
+      re = method.invoke(commandClass, values.toArray());
     } catch (Exception e) {
       e.printStackTrace();
       chatExecutor.displayClientMessage("Error during command execution. Checks logs.");
       return 1;
     }
+    return Utils.typeIsBool(re.getClass()) ? (Boolean) re ? 1 : 0 : 0;
   }
 
   private static ArgumentType<?> argumentTypeFactory(Parameter parameter) {
@@ -179,11 +185,13 @@ public class Transformer {
           Method autoCompleteFunc = commandClass.getClass().getMethod(autoComplete.method(),
               art.ameliah.brigadier.core.models.CommandContext.class);
           if (!autoCompleteFunc.canAccess(commandClass)) {
-            throw new CommandException("Autocomplete method must be public.");
+            throw new CommandException("Autocomplete method (%s) must be public for %s.",
+                autoComplete.method(), method.getName());
           }
           autoCompleteMap.put(autoComplete.parameterName(), autoCompleteFunc);
         } catch (NoSuchMethodException e) {
-          throw new CommandException("Autocomplete method does not exists");
+          throw new CommandException("Autocomplete method (%s) does not exists for %s.",
+              autoComplete.method(), method.getName());
         }
       }
     }
@@ -202,9 +210,8 @@ public class Transformer {
         parameter = parameters[i];
         argumentType = argumentTypeFactory(parameter);
         if (argumentType == null) {
-          throw new CommandException(
-              "Unsupported type for argument " + parameter.getName() + "with type "
-                  + parameter.getType());
+          throw new CommandException("Unsupported type for argument (%s) with type %s",
+              parameter.getName(), parameter.getType());
         }
 
         RequiredArgumentBuilder<CommandSourceStack, ?> requiredArgumentBuilder = RequiredArgumentBuilder.argument(
@@ -231,7 +238,8 @@ public class Transformer {
           canExec = false;
         } else {
           if (encounteredNonOptional) {
-            throw new CommandException("Cannot have an Optional before required argument");
+            throw new CommandException(
+                "Optional arguments can only be succeeded by optional arguments. (%s)", method);
           }
         }
       }
@@ -257,36 +265,31 @@ public class Transformer {
         continue;
       }
       if (!Utils.typeIsBool(method.getReturnType())) {
-        throw new CommandException("Command must return a boolean");
+        throw new CommandException("Command must return a boolean. (%s)", method);
       }
       if (!(method.canAccess(commandClass))) {
-        throw new CommandException("Method must be public");
+        throw new CommandException("Method must be public. (%s)", method);
       }
       commandNodes.put(method.getName(), createLiteralArgumentBuilder(method, commandClass));
     }
-
-    Method[] methods = commandClass.getClass().getDeclaredMethods();
     List<String> bases = new ArrayList<>();
 
-    System.out.println(Arrays.toString(methods));
-    commandNodes.forEach((key, value) -> System.out.println(key + " " + value));
-    for (int i = methods.length - 1; i >= 0; i--) {
-      Method method = methods[i];
+    for (Method method : commandClass.getClass().getDeclaredMethods()) {
       if (!method.isAnnotationPresent(Command.class)) {
         continue;
       }
       LiteralArgumentBuilder<CommandSourceStack> cmd = commandNodes.get(method.getName());
       if (cmd == null) {
-        throw new CommandException("Found a non existing command? " + method);
+        throw new CommandException("Found a non existing command? (%s)", method);
       }
-      //commandNodes.remove(method.getName());
-      String parentName = method.getAnnotation(Command.class).parent();
 
+      String parentName = method.getAnnotation(Command.class).parent();
       if (!parentName.equals("")) {
         LiteralArgumentBuilder<CommandSourceStack> parent = commandNodes.get(parentName);
         if (parent == null) {
-          throw new CommandException(method.getName() + "'s parent " + parentName
-              + " isn't present. Was it defined beforehand?");
+          throw new CommandException(
+              "%s's parent %s doesn't exist or isn't annotated with @Command.", method.getName(),
+              parentName);
         }
         parent.then(cmd);
       } else {

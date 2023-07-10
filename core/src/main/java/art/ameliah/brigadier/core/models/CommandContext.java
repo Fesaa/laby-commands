@@ -57,13 +57,7 @@ public abstract class CommandContext {
   /**
    * @return The position of the executing player
    */
-  public FloatVector3 getPosition() {
-    ClientPlayer player = this.labyAPI.minecraft().getClientPlayer();
-    if (player == null) {
-      return null;
-    }
-    return player.position();
-  }
+  public abstract FloatVector3 getPosition();
 
   public void sendChatMessage(String message) {
     this.labyAPI.minecraft().chatExecutor().chat(message);
