@@ -5,10 +5,17 @@ import art.ameliah.brigadier.core.models.CommandContext;
 import art.ameliah.brigadier.core.models.annotations.Command;
 import art.ameliah.brigadier.core.models.annotations.Greedy;
 import art.ameliah.brigadier.core.models.annotations.NoCallback;
+import art.ameliah.brigadier.core.utils.CyclicCollection;
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.component.format.NamedTextColor;
+import java.util.Iterator;
 
 public class ColourCommands extends CommandClass {
+
+  private final CyclicCollection<String> rainbowColour =
+      CyclicCollection.of("§4", "§c", "§6", "§E", "§2", "§a", "§b", "§3", "§1", "§9", "§d", "§5");
+
+  private final CyclicCollection<String> transColour = CyclicCollection.of("§d", "§b","§f", "§b","§d");
 
   public ColourCommands() {
   }
@@ -27,7 +34,37 @@ public class ColourCommands extends CommandClass {
 
   @Command(parent = "colour")
   public boolean rainbow(CommandContext ctx, @Greedy String text) {
-    ctx.displayClientMessage("§4 TEST");
+    StringBuilder out = new StringBuilder();
+    Iterator<String> iterator = this.rainbowColour.iterator();
+
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (c == ' ') {
+        out.append(c);
+      } else {
+        out.append(iterator.next()).append(c);
+      }
+    }
+
+    ctx.displayClientMessage(out.toString());
+    return true;
+  }
+
+  @Command(parent = "colour")
+  public boolean trans(CommandContext ctx, @Greedy String text) {
+    StringBuilder out = new StringBuilder();
+    Iterator<String> iterator = this.transColour.iterator();
+
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (c == ' ') {
+        out.append(c);
+      } else {
+      out.append(iterator.next()).append(c);
+      }
+    }
+
+    ctx.displayClientMessage(out.toString());
     return true;
   }
 
