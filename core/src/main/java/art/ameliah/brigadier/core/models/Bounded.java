@@ -6,8 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Limit the range on Integers, Floats and Doubles.
- * Be wary to use the correct attribute
+ * Limit the range on Integers, Floats and Doubles. Be wary to use the correct attribute
  * <pre>
  * {@code
  * @Command

@@ -12,7 +12,6 @@ import art.ameliah.brigadier.core.models.AutoComplete;
 import art.ameliah.brigadier.core.models.AutoCompleteContainer;
 import art.ameliah.brigadier.core.models.Bounded;
 import art.ameliah.brigadier.core.models.Command;
-import art.ameliah.brigadier.core.models.CommandGroup;
 import art.ameliah.brigadier.core.models.Greedy;
 import art.ameliah.brigadier.core.models.NoCallback;
 import art.ameliah.brigadier.core.models.Optional;
@@ -48,11 +47,13 @@ public class Transformer {
     for (int i = 0; i < size; i++) {
       Parameter parameter = parameters[i];
 
-      if (i == 0 && !parameter.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class)) {
+      if (i == 0 && !parameter.getType()
+          .equals(art.ameliah.brigadier.core.models.CommandContext.class)) {
         throw new CommandException("First argument must be CommandContext");
       }
 
-      if (parameter.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class) && i != 0) {
+      if (parameter.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class)
+          && i != 0) {
         throw new CommandException("CommandContext must be the first argument");
       }
 
@@ -249,56 +250,50 @@ public class Transformer {
       @NotNull Object commandClass) throws CommandException {
     Objects.requireNonNull(commandClass, "commandClass");
 
-    List<LiteralArgumentBuilder<CommandSourceStack>> commands = new ArrayList<>();
-    HashMap<String, LiteralArgumentBuilder<CommandSourceStack>> commandGroupMap = new HashMap<>();
+    HashMap<String, LiteralArgumentBuilder<CommandSourceStack>> commandNodes = new HashMap<>();
 
-    for (Method method : commandClass.getClass().getMethods()) {
-      if (!method.isAnnotationPresent(CommandGroup.class)) {
-        continue;
-      }
-      if (method.isAnnotationPresent(Command.class)) {
-        throw new CommandException("CommandGroup cannot be a Command");
-      }
-      if (!Utils.typeIsBool(method.getReturnType())) {
-        throw new CommandException("Command must return a boolean");
-      }
-      if (!(method.canAccess(commandClass))) {
-        throw new CommandException("Method must be public");
-      }
-      commandGroupMap.put(method.getName(), createLiteralArgumentBuilder(method, commandClass));
-    }
-
-    for (Method method : commandClass.getClass().getMethods()) {
+    for (Method method : commandClass.getClass().getDeclaredMethods()) {
       if (!method.isAnnotationPresent(Command.class)) {
         continue;
       }
-      if (method.isAnnotationPresent(CommandGroup.class)) {
-        throw new CommandException("Command cannot be a CommandGroup");
-      }
       if (!Utils.typeIsBool(method.getReturnType())) {
         throw new CommandException("Command must return a boolean");
       }
       if (!(method.canAccess(commandClass))) {
         throw new CommandException("Method must be public");
       }
+      commandNodes.put(method.getName(), createLiteralArgumentBuilder(method, commandClass));
+    }
 
-      LiteralArgumentBuilder<CommandSourceStack> cmd = createLiteralArgumentBuilder(method,
-          commandClass);
+    Method[] methods = commandClass.getClass().getDeclaredMethods();
+    List<String> bases = new ArrayList<>();
+
+    System.out.println(Arrays.toString(methods));
+    commandNodes.forEach((key, value) -> System.out.println(key + " " + value));
+    for (int i = methods.length - 1; i >= 0; i--) {
+      Method method = methods[i];
+      if (!method.isAnnotationPresent(Command.class)) {
+        continue;
+      }
+      LiteralArgumentBuilder<CommandSourceStack> cmd = commandNodes.get(method.getName());
+      if (cmd == null) {
+        throw new CommandException("Found a non existing command? " + method);
+      }
+      //commandNodes.remove(method.getName());
       String parentName = method.getAnnotation(Command.class).parent();
 
-      if (parentName.equals("")) {
-        commands.add(cmd);
-      } else {
-        LiteralArgumentBuilder<CommandSourceStack> parent = commandGroupMap.get(parentName);
+      if (!parentName.equals("")) {
+        LiteralArgumentBuilder<CommandSourceStack> parent = commandNodes.get(parentName);
         if (parent == null) {
-          throw new CommandException(
-              "Command parent " + parentName + "does not exists for " + method.getName() + ".");
+          throw new CommandException(method.getName() + "'s parent " + parentName
+              + " isn't present. Was it defined beforehand?");
         }
         parent.then(cmd);
+      } else {
+        bases.add(method.getName());
       }
     }
 
-    commands.addAll(commandGroupMap.values());
-    return commands;
+    return bases.stream().map(commandNodes::get).toList();
   }
 }

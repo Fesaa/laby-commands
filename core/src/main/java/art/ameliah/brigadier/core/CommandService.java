@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CommandService {
 
-  private static List<Object> commandClasses = new ArrayList<>();
+  private static final List<Object> commandClasses = new ArrayList<>();
 
   public static void registerCommand(@NotNull Object commandClass) {
     Objects.requireNonNull(commandClass, "commandClass");

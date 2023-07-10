@@ -2,7 +2,6 @@ package art.ameliah.brigadier.core.commands;
 
 import art.ameliah.brigadier.core.models.Command;
 import art.ameliah.brigadier.core.models.CommandContext;
-import art.ameliah.brigadier.core.models.CommandGroup;
 import art.ameliah.brigadier.core.models.Greedy;
 import art.ameliah.brigadier.core.models.NoCallback;
 
@@ -11,7 +10,7 @@ public class ColourCommands {
   public ColourCommands() {
   }
 
-  @CommandGroup
+  @Command
   @NoCallback
   public boolean colour(CommandContext ctx) {
     return true;

@@ -4,14 +4,13 @@ import art.ameliah.brigadier.core.models.AutoComplete;
 import art.ameliah.brigadier.core.models.Bounded;
 import art.ameliah.brigadier.core.models.Command;
 import art.ameliah.brigadier.core.models.CommandContext;
-import art.ameliah.brigadier.core.models.CommandGroup;
 import art.ameliah.brigadier.core.models.Greedy;
 import art.ameliah.brigadier.core.models.Optional;
 import java.util.List;
 
 public class TestCommands {
 
-  @CommandGroup
+  @Command
   public boolean foo(CommandContext ctx) {
     ctx.displayClientMessage("Executed foo");
     return true;

@@ -1,6 +1,7 @@
 package art.ameliah.brigadier.core;
 
 import art.ameliah.brigadier.core.commands.ColourCommands;
+import art.ameliah.brigadier.core.commands.ComplicatedBranching;
 import art.ameliah.brigadier.core.commands.TestCommands;
 import net.labymod.api.addon.LabyAddon;
 import net.labymod.api.models.addon.annotation.AddonMain;
@@ -15,6 +16,7 @@ public class Brigadier extends LabyAddon<BrigadierConfig> {
 
     CommandService.registerCommand(new TestCommands());
     CommandService.registerCommand(new ColourCommands());
+    CommandService.registerCommand(new ComplicatedBranching());
 
     this.logger().info("Enabled the Addon");
   }

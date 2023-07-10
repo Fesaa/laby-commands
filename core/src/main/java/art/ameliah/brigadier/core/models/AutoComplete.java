@@ -7,9 +7,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Connect a method to a parameter for command suggestions.
- * The return type must be an array that can be cast to Strings
- * Arguments names are `argN`
+ * Connect a method to a parameter for command suggestions. The return type must be an array that
+ * can be cast to Strings Arguments names are `argN`
  * <pre>
  * {@code
  * @Command
