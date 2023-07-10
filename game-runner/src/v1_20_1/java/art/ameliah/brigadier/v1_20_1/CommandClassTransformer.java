@@ -8,9 +8,12 @@ import static com.mojang.brigadier.arguments.StringArgumentType.greedyString;
 import static com.mojang.brigadier.arguments.StringArgumentType.word;
 
 import art.ameliah.brigadier.core.CommandException;
+import art.ameliah.brigadier.core.models.CommandClass;
 import art.ameliah.brigadier.core.models.annotations.AutoComplete;
 import art.ameliah.brigadier.core.models.annotations.AutoCompleteContainer;
 import art.ameliah.brigadier.core.models.annotations.Bounded;
+import art.ameliah.brigadier.core.models.annotations.Check;
+import art.ameliah.brigadier.core.models.annotations.CheckContainer;
 import art.ameliah.brigadier.core.models.annotations.Command;
 import art.ameliah.brigadier.core.models.annotations.Greedy;
 import art.ameliah.brigadier.core.models.annotations.NoCallback;
@@ -36,11 +39,20 @@ import net.labymod.api.client.chat.ChatExecutor;
 import net.minecraft.commands.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
-public class Transformer {
 
-  private static final ChatExecutor chatExecutor = Laby.labyAPI().minecraft().chatExecutor();
+public class CommandClassTransformer<T extends CommandClass> {
 
-  private static void validateMethod(Method method) throws CommandException {
+  private final ChatExecutor chatExecutor = Laby.labyAPI().minecraft().chatExecutor();
+
+  private final T commandClass;
+
+  private final HashMap<String, List<Method>> commandChecks = new HashMap<>();
+
+  public CommandClassTransformer(T commandClass) {
+    this.commandClass = commandClass;
+  }
+
+  static void validateMethod(Method method) throws CommandException {
     Parameter[] parameters = method.getParameters();
     int size = parameters.length;
     if (size == 0) {
@@ -90,54 +102,7 @@ public class Transformer {
     }
   }
 
-
-  private static CompletableFuture<Suggestions> getSuggestionsCompletableFuture(
-      CommandContext<CommandSourceStack> context, SuggestionsBuilder builder, Parameter parameter,
-      Method func, Object commandClass) {
-    Object result;
-
-    try {
-      result = func.invoke(commandClass, new VersionedCommandContext(context, parameter));
-    } catch (Exception e) {
-      e.printStackTrace();
-      return Suggestions.empty();
-    }
-
-    Object[] resultsArray = (Object[]) result;
-    for (Object obj : resultsArray) {
-      String s = (String) obj;
-      builder.suggest(s);
-    }
-    return builder.buildFuture();
-  }
-
-  private static int commandEval(Method method, Object commandClass,
-      CommandContext<CommandSourceStack> ctx) {
-    List<Object> values = new ArrayList<>();
-    values.add(new VersionedCommandContext(ctx));
-    Arrays.stream(method.getParameters())
-        .filter(
-            par -> !par.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class))
-        .forEach(par -> {
-          try {
-            Object obj = ctx.getArgument(par.getName(), par.getType());
-            values.add(obj);
-          } catch (IllegalArgumentException ignored) {
-            values.add(null);
-          }
-        });
-    Object re;
-    try {
-      re = method.invoke(commandClass, values.toArray());
-    } catch (Exception e) {
-      e.printStackTrace();
-      chatExecutor.displayClientMessage("Error during command execution. Checks logs.");
-      return 1;
-    }
-    return Utils.typeIsBool(re.getClass()) ? (Boolean) re ? 1 : 0 : 0;
-  }
-
-  private static ArgumentType<?> argumentTypeFactory(Parameter parameter) {
+  static ArgumentType<?> argumentTypeFactory(Parameter parameter) {
     Class<?> type = parameter.getType();
     if (Utils.typeIsInt(type)) {
       if (parameter.isAnnotationPresent(Bounded.class)) {
@@ -169,93 +134,8 @@ public class Transformer {
     return null;
   }
 
-  private static LiteralArgumentBuilder<CommandSourceStack> createLiteralArgumentBuilder(
-      @NotNull Method method, Object commandClass) throws CommandException {
-    validateMethod(method);
-
-    LiteralArgumentBuilder<CommandSourceStack> cmd = LiteralArgumentBuilder.literal(
-        method.getName());
-    HashMap<String, Method> autoCompleteMap = new HashMap<>();
-
-    if (method.isAnnotationPresent(AutoComplete.class) || method.isAnnotationPresent(
-        AutoCompleteContainer.class)) {
-      AutoComplete[] annotations = method.getAnnotationsByType(AutoComplete.class);
-      for (AutoComplete autoComplete : annotations) {
-        try {
-          Method autoCompleteFunc = commandClass.getClass().getMethod(autoComplete.method(),
-              art.ameliah.brigadier.core.models.CommandContext.class);
-          if (!autoCompleteFunc.canAccess(commandClass)) {
-            throw new CommandException("Autocomplete method (%s) must be public for %s.",
-                autoComplete.method(), method.getName());
-          }
-          autoCompleteMap.put(autoComplete.parameterName(), autoCompleteFunc);
-        } catch (NoSuchMethodException e) {
-          throw new CommandException("Autocomplete method (%s) does not exists for %s.",
-              autoComplete.method(), method.getName());
-        }
-      }
-    }
-
-    Parameter[] parameters = method.getParameters();
-    int size = parameters.length;
-
-    boolean canExec = !method.isAnnotationPresent(NoCallback.class);
-    boolean encounteredNonOptional = false;
-    Parameter parameter;
-    ArgumentType<?> argumentType;
-    ArgumentBuilder<CommandSourceStack, ?> tail = null;
-
-    if (size > 1) {
-      for (int i = size - 1; i >= 1; i--) {
-        parameter = parameters[i];
-        argumentType = argumentTypeFactory(parameter);
-        if (argumentType == null) {
-          throw new CommandException("Unsupported type for argument (%s) with type %s",
-              parameter.getName(), parameter.getType());
-        }
-
-        RequiredArgumentBuilder<CommandSourceStack, ?> requiredArgumentBuilder = RequiredArgumentBuilder.argument(
-            parameter.getName(), argumentType);
-
-        Method func = autoCompleteMap.get(parameter.getName());
-        if (func != null) {
-          Parameter finalParameter = parameter;
-          requiredArgumentBuilder.suggests(
-              (context, builder) -> getSuggestionsCompletableFuture(context, builder,
-                  finalParameter, func, commandClass));
-        }
-
-        if (canExec) {
-          requiredArgumentBuilder.executes(ctx -> commandEval(method, commandClass, ctx));
-        }
-
-        tail = tail == null
-            ? requiredArgumentBuilder
-            : requiredArgumentBuilder.then(tail);
-
-        if (!parameter.isAnnotationPresent(Optional.class)) {
-          encounteredNonOptional = true;
-          canExec = false;
-        } else {
-          if (encounteredNonOptional) {
-            throw new CommandException(
-                "Optional arguments can only be succeeded by optional arguments. (%s)", method);
-          }
-        }
-      }
-    }
-    cmd = tail == null
-        ? cmd
-        : cmd.then(tail);
-
-    if (canExec) {
-      cmd.executes(ctx -> commandEval(method, commandClass, ctx));
-    }
-    return cmd;
-  }
-
-  public static @NotNull List<LiteralArgumentBuilder<CommandSourceStack>> transform(
-      @NotNull Object commandClass) throws CommandException {
+  public @NotNull List<LiteralArgumentBuilder<CommandSourceStack>> getCommands()
+      throws CommandException {
     Objects.requireNonNull(commandClass, "commandClass");
 
     HashMap<String, LiteralArgumentBuilder<CommandSourceStack>> commandNodes = new HashMap<>();
@@ -270,7 +150,7 @@ public class Transformer {
       if (!(method.canAccess(commandClass))) {
         throw new CommandException("Method must be public. (%s)", method);
       }
-      commandNodes.put(method.getName(), createLiteralArgumentBuilder(method, commandClass));
+      commandNodes.put(method.getName(), this.createLiteralArgumentBuilder(method));
     }
     List<String> bases = new ArrayList<>();
 
@@ -299,4 +179,181 @@ public class Transformer {
 
     return bases.stream().map(commandNodes::get).toList();
   }
+
+  private LiteralArgumentBuilder<CommandSourceStack> createLiteralArgumentBuilder(
+      @NotNull Method method) throws CommandException {
+    validateMethod(method);
+
+    LiteralArgumentBuilder<CommandSourceStack> cmd = LiteralArgumentBuilder.literal(
+        method.getName());
+    HashMap<String, Method> autoCompleteMap = new HashMap<>();
+
+    if (method.isAnnotationPresent(AutoComplete.class) || method.isAnnotationPresent(
+        AutoCompleteContainer.class)) {
+      for (AutoComplete autoComplete : method.getAnnotationsByType(AutoComplete.class)) {
+        try {
+          Method autoCompleteFunc = this.commandClass.getClass().getMethod(autoComplete.method(),
+              art.ameliah.brigadier.core.models.CommandContext.class);
+          if (!autoCompleteFunc.canAccess(this.commandClass)) {
+            throw new CommandException("Autocomplete method (%s) must be public for %s.",
+                autoComplete.method(), method.getName());
+          }
+          autoCompleteMap.put(autoComplete.parameterName(), autoCompleteFunc);
+        } catch (NoSuchMethodException e) {
+          throw new CommandException("Autocomplete method (%s) does not exists for %s.",
+              autoComplete.method(), method.getName());
+        }
+      }
+    }
+
+    if (method.isAnnotationPresent(Check.class) || method.isAnnotationPresent(
+        CheckContainer.class)) {
+      List<Method> checks = new ArrayList<>();
+      for (Check check : method.getAnnotationsByType(Check.class)) {
+        try {
+          Method checkMethod = this.commandClass.getClass()
+              .getMethod(check.method(), art.ameliah.brigadier.core.models.CommandContext.class);
+          if (!checkMethod.canAccess(this.commandClass)) {
+            throw new CommandException("CheckMethod method (%s) must be public for %s.",
+                check.method(), method.getName());
+          }
+          checks.add(checkMethod);
+        } catch (NoSuchMethodException e) {
+          throw new CommandException("CheckMethod method (%s) does not exists for %s.",
+              check.method(), method.getName());
+        }
+      }
+      this.commandChecks.put(method.getName(), checks);
+    }
+
+    Parameter[] parameters = method.getParameters();
+    int size = parameters.length;
+
+    boolean canExec = !method.isAnnotationPresent(NoCallback.class);
+    boolean encounteredNonOptional = false;
+    Parameter parameter;
+    ArgumentType<?> argumentType;
+    ArgumentBuilder<CommandSourceStack, ?> tail = null;
+
+    if (size > 1) {
+      for (int i = size - 1; i >= 1; i--) {
+        parameter = parameters[i];
+        argumentType = argumentTypeFactory(parameter);
+        if (argumentType == null) {
+          throw new CommandException("Unsupported type for argument (%s) with type %s",
+              parameter.getName(), parameter.getType());
+        }
+
+        RequiredArgumentBuilder<CommandSourceStack, ?> requiredArgumentBuilder = RequiredArgumentBuilder.argument(
+            parameter.getName(), argumentType);
+
+        Method func = autoCompleteMap.get(parameter.getName());
+        if (func != null) {
+          Parameter finalParameter = parameter;
+          requiredArgumentBuilder.suggests(
+              (context, builder) -> this.getSuggestionsCompletableFuture(context, builder,
+                  finalParameter, func));
+        }
+
+        if (canExec) {
+          requiredArgumentBuilder.executes(ctx -> commandEval(method, ctx));
+        }
+
+        tail = tail == null
+            ? requiredArgumentBuilder
+            : requiredArgumentBuilder.then(tail);
+
+        if (!parameter.isAnnotationPresent(Optional.class)) {
+          encounteredNonOptional = true;
+          canExec = false;
+        } else {
+          if (encounteredNonOptional) {
+            throw new CommandException(
+                "Optional arguments can only be succeeded by optional arguments. (%s)", method);
+          }
+        }
+      }
+    }
+    cmd = tail == null
+        ? cmd
+        : cmd.then(tail);
+
+    if (canExec) {
+      cmd.executes(ctx -> commandEval(method, ctx));
+    }
+    return cmd;
+  }
+
+  private int commandEval(Method method, CommandContext<CommandSourceStack> ctx) {
+    VersionedCommandContext versionedCtx = new VersionedCommandContext(ctx);
+
+    if (!this.commandClass.classCheck(versionedCtx)) {
+      this.chatExecutor.displayClientMessage(this.commandClass.noPermissionComponent());
+      return 1;
+    }
+
+    List<Method> checks = this.commandChecks.get(method.getName());
+    if (checks != null) {
+      for (Method check : checks) {
+        try {
+          Object re = check.invoke(this.commandClass, versionedCtx);
+          if (!Utils.typeIsBool(re.getClass())) {
+            return 0;
+          }
+          if (!(Boolean) re) {
+            this.chatExecutor.displayClientMessage(this.commandClass.noPermissionComponent());
+            return 1;
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+          this.chatExecutor.displayClientMessage(this.commandClass.errorComponent());
+          return 1;
+        }
+      }
+    }
+
+    List<Object> values = new ArrayList<>();
+    values.add(versionedCtx);
+    Arrays.stream(method.getParameters())
+        .filter(
+            par -> !par.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class))
+        .forEach(par -> {
+          try {
+            Object obj = ctx.getArgument(par.getName(), par.getType());
+            values.add(obj);
+          } catch (IllegalArgumentException ignored) {
+            values.add(null);
+          }
+        });
+    Object re;
+    try {
+      re = method.invoke(commandClass, values.toArray());
+    } catch (Exception e) {
+      e.printStackTrace();
+      chatExecutor.displayClientMessage("Error during command execution. Checks logs.");
+      return 1;
+    }
+    return Utils.typeIsBool(re.getClass()) ? (Boolean) re ? 1 : 0 : 0;
+  }
+
+  private CompletableFuture<Suggestions> getSuggestionsCompletableFuture(
+      CommandContext<CommandSourceStack> context, SuggestionsBuilder builder, Parameter parameter,
+      Method func) {
+    Object result;
+
+    try {
+      result = func.invoke(this.commandClass, new VersionedCommandContext(context, parameter));
+    } catch (Exception e) {
+      e.printStackTrace();
+      return Suggestions.empty();
+    }
+
+    Object[] resultsArray = (Object[]) result;
+    for (Object obj : resultsArray) {
+      String s = (String) obj;
+      builder.suggest(s);
+    }
+    return builder.buildFuture();
+  }
+
 }

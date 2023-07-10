@@ -50,6 +50,7 @@ public abstract class CommandContext {
   /**
    * @return The player executing the command
    */
+  @Nullable
   public ClientPlayer getClientPlayer() {
     return this.labyAPI.minecraft().getClientPlayer();
   }

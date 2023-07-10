@@ -1,8 +1,9 @@
 package art.ameliah.brigadier.v1_20_1.mixins;
 
+import art.ameliah.brigadier.core.Brigadier;
 import art.ameliah.brigadier.core.CommandException;
-import art.ameliah.brigadier.core.CommandService;
-import art.ameliah.brigadier.v1_20_1.Transformer;
+import art.ameliah.brigadier.core.models.CommandClass;
+import art.ameliah.brigadier.v1_20_1.CommandClassTransformer;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import java.util.ArrayList;
@@ -26,10 +27,10 @@ public class CommandsMixin {
   @Inject(method = "<init>", at = @At("TAIL"))
   private void injectAtConstructorEnd(CallbackInfo ci) {
     List<List<LiteralArgumentBuilder<CommandSourceStack>>> cmds = new ArrayList<>();
-    for (Object command : CommandService.getCommandClasses()) {
+    for (CommandClass commandClass : Brigadier.get().getCommandService().getCommandClasses()) {
       List<LiteralArgumentBuilder<CommandSourceStack>> commands;
       try {
-        commands = Transformer.transform(command);
+        commands = (new CommandClassTransformer<>(commandClass)).getCommands();
       } catch (CommandException e) {
         e.printStackTrace();
         continue;

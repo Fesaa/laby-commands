@@ -1,11 +1,14 @@
 package art.ameliah.brigadier.core.commands;
 
-import art.ameliah.brigadier.core.models.annotations.Command;
+import art.ameliah.brigadier.core.models.CommandClass;
 import art.ameliah.brigadier.core.models.CommandContext;
+import art.ameliah.brigadier.core.models.annotations.Command;
 import art.ameliah.brigadier.core.models.annotations.Greedy;
 import art.ameliah.brigadier.core.models.annotations.NoCallback;
+import net.labymod.api.client.component.Component;
+import net.labymod.api.client.component.format.NamedTextColor;
 
-public class ColourCommands {
+public class ColourCommands extends CommandClass {
 
   public ColourCommands() {
   }
@@ -28,4 +31,9 @@ public class ColourCommands {
     return true;
   }
 
+  @Override
+  public Component noPermissionComponent() {
+    return Component.text("You do not have the required permissions to use this command.",
+        NamedTextColor.RED);
+  }
 }

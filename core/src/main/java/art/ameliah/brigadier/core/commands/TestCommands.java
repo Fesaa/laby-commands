@@ -1,14 +1,24 @@
 package art.ameliah.brigadier.core.commands;
 
+import art.ameliah.brigadier.core.models.CommandClass;
+import art.ameliah.brigadier.core.models.CommandContext;
 import art.ameliah.brigadier.core.models.annotations.AutoComplete;
 import art.ameliah.brigadier.core.models.annotations.Bounded;
+import art.ameliah.brigadier.core.models.annotations.Check;
 import art.ameliah.brigadier.core.models.annotations.Command;
-import art.ameliah.brigadier.core.models.CommandContext;
 import art.ameliah.brigadier.core.models.annotations.Greedy;
 import art.ameliah.brigadier.core.models.annotations.Optional;
 import java.util.List;
+import net.labymod.api.client.component.Component;
+import net.labymod.api.client.component.format.NamedTextColor;
 
-public class TestCommands {
+public class TestCommands extends CommandClass {
+
+  @Override
+  public Component noPermissionComponent() {
+    return Component.text("You do not have the required permissions to use this command.",
+        NamedTextColor.RED);
+  }
 
   @Command
   public boolean foo(CommandContext ctx) {
@@ -17,6 +27,7 @@ public class TestCommands {
   }
 
   @Command(parent = "foo")
+  @Check(method = "isCreative")
   public boolean bar(CommandContext ctx) {
     ctx.displayClientMessage("Executed bar");
     return true;
@@ -48,5 +59,4 @@ public class TestCommands {
     ctx.displayClientMessage(name + " " + other + (third == null ? "" : " " + third));
     return true;
   }
-
 }
