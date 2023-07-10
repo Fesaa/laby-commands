@@ -9,8 +9,16 @@ import java.lang.annotation.Target;
 @Target(ElementType.PARAMETER)
 public @interface Bounded {
 
-  int min() default Integer.MIN_VALUE;
+  int min_int() default Integer.MIN_VALUE;
 
-  int max() default Integer.MAX_VALUE;
+  int max_int() default Integer.MAX_VALUE;
+
+  float min_float() default Float.MIN_VALUE;
+
+  float max_float() default Float.MAX_VALUE;
+
+  double min_double() default Double.MIN_VALUE;
+
+  double max_double() default Double.MAX_VALUE;
 
 }
