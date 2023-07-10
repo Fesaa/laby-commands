@@ -16,4 +16,6 @@ public @interface Check {
 
   String method();
 
+  String errorMethod() default "noPermissionComponent";
+
 }

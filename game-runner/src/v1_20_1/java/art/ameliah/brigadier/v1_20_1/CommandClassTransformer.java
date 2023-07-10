@@ -36,6 +36,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import net.labymod.api.Laby;
 import net.labymod.api.client.chat.ChatExecutor;
+import net.labymod.v1_20_1.client.network.chat.VersionedTextComponent;
 import net.minecraft.commands.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,9 +48,11 @@ public class CommandClassTransformer<T extends CommandClass> {
   private final T commandClass;
 
   private final HashMap<String, List<Method>> commandChecks = new HashMap<>();
+  private final HashMap<String, Method> errorMethods = new HashMap<>();
 
-  public CommandClassTransformer(T commandClass) {
+  public CommandClassTransformer(T commandClass) throws CommandException {
     this.commandClass = commandClass;
+    this.populateCheckMaps();
   }
 
   static void validateMethod(Method method) throws CommandException {
@@ -134,6 +137,48 @@ public class CommandClassTransformer<T extends CommandClass> {
     return null;
   }
 
+  public void populateCheckMaps() throws CommandException {
+    for (Method method : this.commandClass.getClass().getMethods()) {
+      if (!method.isAnnotationPresent(Command.class)) continue;
+
+      if (method.isAnnotationPresent(Check.class) || method.isAnnotationPresent(
+          CheckContainer.class)) {
+        List<Method> checks = new ArrayList<>();
+        for (Check check : method.getAnnotationsByType(Check.class)) {
+          try {
+            Method checkMethod = this.commandClass.getClass()
+                .getMethod(check.method(), art.ameliah.brigadier.core.models.CommandContext.class);
+            if (!checkMethod.canAccess(this.commandClass)) {
+              throw new CommandException("CheckMethod method (%s) must be public for %s.",
+                  check.method(), method.getName());
+            }
+            checks.add(checkMethod);
+          } catch (NoSuchMethodException e) {
+            throw new CommandException("CheckMethod method (%s) does not exists for %s.",
+                check.method(), method.getName());
+          }
+
+          String errorMethodName = check.errorMethod();
+          if (!errorMethodName.equals("noPermissionComponent")) {
+            try {
+              Method errorMethod = this.commandClass.getClass().getMethod(errorMethodName);
+              if (!errorMethod.canAccess(this.commandClass)) {
+                throw new CommandException("ErrorMethod method (%s) must be public for %s.",
+                    check.method(), method.getName());
+              }
+              this.errorMethods.put(method.getName(), errorMethod);
+            } catch (NoSuchMethodException e) {
+              throw new CommandException("ErrorMethod method (%s) does not exists for %s.",
+                  check.method(), method.getName());
+            }
+          }
+
+        }
+        this.commandChecks.put(method.getName(), checks);
+      }
+    }
+  }
+
   public @NotNull List<LiteralArgumentBuilder<CommandSourceStack>> getCommands()
       throws CommandException {
     Objects.requireNonNull(commandClass, "commandClass");
@@ -204,26 +249,6 @@ public class CommandClassTransformer<T extends CommandClass> {
               autoComplete.method(), method.getName());
         }
       }
-    }
-
-    if (method.isAnnotationPresent(Check.class) || method.isAnnotationPresent(
-        CheckContainer.class)) {
-      List<Method> checks = new ArrayList<>();
-      for (Check check : method.getAnnotationsByType(Check.class)) {
-        try {
-          Method checkMethod = this.commandClass.getClass()
-              .getMethod(check.method(), art.ameliah.brigadier.core.models.CommandContext.class);
-          if (!checkMethod.canAccess(this.commandClass)) {
-            throw new CommandException("CheckMethod method (%s) must be public for %s.",
-                check.method(), method.getName());
-          }
-          checks.add(checkMethod);
-        } catch (NoSuchMethodException e) {
-          throw new CommandException("CheckMethod method (%s) does not exists for %s.",
-              check.method(), method.getName());
-        }
-      }
-      this.commandChecks.put(method.getName(), checks);
     }
 
     Parameter[] parameters = method.getParameters();
@@ -301,8 +326,19 @@ public class CommandClassTransformer<T extends CommandClass> {
             return 0;
           }
           if (!(Boolean) re) {
-            this.chatExecutor.displayClientMessage(this.commandClass.noPermissionComponent());
-            return 1;
+            Method errorComponent = this.errorMethods.get(method.getName());
+            if (errorComponent == null) {
+              this.chatExecutor.displayClientMessage(this.commandClass.noPermissionComponent());
+              return 1;
+            }
+
+            Object comp = errorComponent.invoke(this.commandClass);
+
+            if (comp.getClass().equals(VersionedTextComponent.class)) {
+              this.chatExecutor.displayClientMessage((VersionedTextComponent) comp);
+              return 1;
+            }
+            return 0;
           }
         } catch (Exception e) {
           e.printStackTrace();
