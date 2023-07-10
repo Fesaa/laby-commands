@@ -1,10 +1,10 @@
 package art.ameliah.brigadier.core.commands;
 
-import art.ameliah.brigadier.core.models.Command;
+import art.ameliah.brigadier.core.models.annotations.Command;
 import art.ameliah.brigadier.core.models.CommandContext;
-import art.ameliah.brigadier.core.models.Greedy;
-import art.ameliah.brigadier.core.models.NoCallback;
-import art.ameliah.brigadier.core.models.Optional;
+import art.ameliah.brigadier.core.models.annotations.Greedy;
+import art.ameliah.brigadier.core.models.annotations.NoCallback;
+import art.ameliah.brigadier.core.models.annotations.Optional;
 
 public class ComplicatedBranching {
 
