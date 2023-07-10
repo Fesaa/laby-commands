@@ -64,18 +64,12 @@ public abstract class CommandContext {
     this.labyAPI.minecraft().chatExecutor().chat(message);
   }
 
-  ;
-
   public void displayClientMessage(String message) {
     this.labyAPI.minecraft().chatExecutor().displayClientMessage(message);
   }
 
-  ;
-
   public void displayClientMessage(Component message) {
     this.labyAPI.minecraft().chatExecutor().displayClientMessage(message);
   }
-
-  ;
 
 }
