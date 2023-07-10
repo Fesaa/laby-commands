@@ -14,7 +14,7 @@ public class Brigadier extends LabyAddon<BrigadierConfig> {
     this.registerSettingCategory();
 
     CommandService.registerCommand(new TestCommands());
-    CommandService.registerCommand(new ColourCommands(this));
+    CommandService.registerCommand(new ColourCommands());
 
     this.logger().info("Enabled the Addon");
   }

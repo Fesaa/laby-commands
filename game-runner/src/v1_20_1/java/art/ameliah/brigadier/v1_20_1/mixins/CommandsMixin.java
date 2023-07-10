@@ -27,12 +27,14 @@ public class CommandsMixin {
   private void injectAtConstructorEnd(CallbackInfo ci) {
     List<List<LiteralArgumentBuilder<CommandSourceStack>>> cmds = new ArrayList<>();
     for (Object command : CommandService.getCommandClasses()) {
+      List<LiteralArgumentBuilder<CommandSourceStack>> commands;
       try {
-        cmds.add(Transformer.transform(command));
+        commands = Transformer.transform(command);
       } catch (CommandException e) {
         e.printStackTrace();
-        return;
+        continue;
       }
+      cmds.add(commands);
     }
     for (List<LiteralArgumentBuilder<CommandSourceStack>> cmdList : cmds) {
       for (LiteralArgumentBuilder<CommandSourceStack> cmd : cmdList) {

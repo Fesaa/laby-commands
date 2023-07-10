@@ -9,6 +9,7 @@ import static com.mojang.brigadier.arguments.StringArgumentType.word;
 
 import art.ameliah.brigadier.core.CommandException;
 import art.ameliah.brigadier.core.models.AutoComplete;
+import art.ameliah.brigadier.core.models.AutoCompleteContainer;
 import art.ameliah.brigadier.core.models.Bounded;
 import art.ameliah.brigadier.core.models.Command;
 import art.ameliah.brigadier.core.models.CommandGroup;
@@ -40,19 +41,45 @@ public class Transformer {
 
   private static final ChatExecutor chatExecutor = Laby.labyAPI().minecraft().chatExecutor();
 
+  private static void validateMethod(Method method) throws CommandException {
+    Parameter[] parameters = method.getParameters();
+    int size = parameters.length;
+    boolean hasPassedOptional = false;
+    for (int i = 0; i < size; i++) {
+      Parameter parameter = parameters[i];
+
+      if (parameter.isAnnotationPresent(Greedy.class)) {
+        if (i != size - 1) {
+          throw new CommandException("Greedy can only be used on the last argument.");
+        }
+        if (!parameter.getType().equals(String.class)) {
+          throw new CommandException("Greedy can only be used on Strings.");
+        }
+      }
+
+      if (parameter.isAnnotationPresent(Optional.class)) {
+        hasPassedOptional = true;
+      } else if (hasPassedOptional) {
+        throw new CommandException("Not optional argument cannot come after an optional one.");
+      }
+
+      if (parameter.isAnnotationPresent(Bounded.class) &&
+          !(Utils.typeIsFloat(parameter.getType()) ||
+              Utils.typeIsDouble(parameter.getType()) ||
+              Utils.typeIsInt(parameter.getType()))) {
+        throw new CommandException("Bounded can only be used on Integers, Floats and Doubles.");
+      }
+    }
+  }
+
 
   private static CompletableFuture<Suggestions> getSuggestionsCompletableFuture(
-      CommandContext context, SuggestionsBuilder builder, Parameter last, Method func, Object commandClass) {
-    Object current;
-    try {
-      current = context.getArgument(last.getName(), last.getType());
-    } catch (IllegalArgumentException ignored) {
-      current = "";
-    }
+      CommandContext<CommandSourceStack> context, SuggestionsBuilder builder, Parameter parameter,
+      Method func, Object commandClass) {
     Object result;
 
     try {
-      result = func.invoke(commandClass, current);
+      result = func.invoke(commandClass, new VersionedCommandContext(context, parameter));
     } catch (Exception e) {
       e.printStackTrace();
       return Suggestions.empty();
@@ -66,31 +93,36 @@ public class Transformer {
     return builder.buildFuture();
   }
 
-  private static int getCommandEval(Method method, Object commandClass,CommandContext<CommandSourceStack> ctx) {
-      try {
-        List<Object> values = new ArrayList<>();
-        Arrays.stream(method.getParameters())
-            .forEach(par -> {
-        try {
-          Object obj = ctx.getArgument(par.getName(), par.getType());
-          values.add(obj);
-          } catch (IllegalArgumentException ignored) {
-          values.add(null);
-          }
-        });
-        Object re = values.size() == 0
-            ? method.invoke(commandClass)
-            : method.invoke(commandClass, values.toArray());
+  private static int commandEval(Method method, Object commandClass,
+      CommandContext<CommandSourceStack> ctx) {
+    try {
+      List<Object> values = new ArrayList<>();
+      values.add(new VersionedCommandContext(ctx));
+      Arrays.stream(method.getParameters())
+          .filter(
+              par -> !par.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class))
+          .forEach(par -> {
+            try {
+              Object obj = ctx.getArgument(par.getName(), par.getType());
+              values.add(obj);
+            } catch (IllegalArgumentException ignored) {
+              values.add(null);
+            }
+          });
 
-        return Utils.typeIsBool(re.getClass()) ? (Boolean) re ? 1 : 0 : 0;
-      } catch (Exception e) {
-        e.printStackTrace();
-        chatExecutor.displayClientMessage("Error during command execution. Checks logs.");
-        return 1;
-      }
+      Object re = values.size() == 0
+          ? method.invoke(commandClass)
+          : method.invoke(commandClass, values.toArray());
+
+      return Utils.typeIsBool(re.getClass()) ? (Boolean) re ? 1 : 0 : 0;
+    } catch (Exception e) {
+      e.printStackTrace();
+      chatExecutor.displayClientMessage("Error during command execution. Checks logs.");
+      return 1;
+    }
   }
 
-  private static ArgumentType argumentTypeFactory(Parameter parameter) {
+  private static ArgumentType<?> argumentTypeFactory(Parameter parameter) {
     Class<?> type = parameter.getType();
     if (Utils.typeIsInt(type)) {
       if (parameter.isAnnotationPresent(Bounded.class)) {
@@ -122,17 +154,24 @@ public class Transformer {
     return null;
   }
 
-  private static LiteralArgumentBuilder<CommandSourceStack> createLiteralArgumentBuilder(@NotNull Method method, Object commandClass) throws CommandException {
-    LiteralArgumentBuilder<CommandSourceStack> cmd = LiteralArgumentBuilder.<CommandSourceStack>literal(method.getName());
+  private static LiteralArgumentBuilder<CommandSourceStack> createLiteralArgumentBuilder(
+      @NotNull Method method, Object commandClass) throws CommandException {
+    validateMethod(method);
 
+    LiteralArgumentBuilder<CommandSourceStack> cmd = LiteralArgumentBuilder.literal(
+        method.getName());
     HashMap<String, Method> autoCompleteMap = new HashMap<>();
 
-    if (method.isAnnotationPresent(AutoComplete.class)) {
+    if (method.isAnnotationPresent(AutoComplete.class) || method.isAnnotationPresent(
+        AutoCompleteContainer.class)) {
       AutoComplete[] annotations = method.getAnnotationsByType(AutoComplete.class);
       for (AutoComplete autoComplete : annotations) {
         try {
-          Method autoCompleteFunc = commandClass.getClass().getMethod(autoComplete.method(), String.class);
-          if (!autoCompleteFunc.canAccess(commandClass)) throw new CommandException("Autocomplete method must be public.");
+          Method autoCompleteFunc = commandClass.getClass().getMethod(autoComplete.method(),
+              art.ameliah.brigadier.core.models.CommandContext.class);
+          if (!autoCompleteFunc.canAccess(commandClass)) {
+            throw new CommandException("Autocomplete method must be public.");
+          }
           autoCompleteMap.put(autoComplete.parameterName(), autoCompleteFunc);
         } catch (NoSuchMethodException e) {
           throw new CommandException("Autocomplete method does not exists");
@@ -146,26 +185,32 @@ public class Transformer {
     boolean canExec = !method.isAnnotationPresent(NoCallback.class);
     boolean encounteredNonOptional = false;
     Parameter parameter;
-    ArgumentType argumentType;
-    ArgumentBuilder tail = null;
+    ArgumentType<?> argumentType;
+    ArgumentBuilder<CommandSourceStack, ?> tail = null;
 
-    if (size > 0) {
+    if (size > 1) {
       for (int i = size - 1; i >= 1; i--) {
         parameter = parameters[i];
         argumentType = argumentTypeFactory(parameter);
-        if (argumentType == null) throw new CommandException("Unsupported type for argument " + parameter.getName() + "with type " + parameter.getType());
+        if (argumentType == null) {
+          throw new CommandException(
+              "Unsupported type for argument " + parameter.getName() + "with type "
+                  + parameter.getType());
+        }
 
-        RequiredArgumentBuilder requiredArgumentBuilder = RequiredArgumentBuilder.argument(parameter.getName(), argumentType);
+        RequiredArgumentBuilder<CommandSourceStack, ?> requiredArgumentBuilder = RequiredArgumentBuilder.argument(
+            parameter.getName(), argumentType);
 
         Method func = autoCompleteMap.get(parameter.getName());
         if (func != null) {
           Parameter finalParameter = parameter;
-          requiredArgumentBuilder.suggests((context, builder) -> getSuggestionsCompletableFuture(
-              context, builder, finalParameter, func, commandClass));
+          requiredArgumentBuilder.suggests(
+              (context, builder) -> getSuggestionsCompletableFuture(context, builder,
+                  finalParameter, func, commandClass));
         }
 
         if (canExec) {
-          requiredArgumentBuilder.executes(ctx -> getCommandEval(method, commandClass, ctx));
+          requiredArgumentBuilder.executes(ctx -> commandEval(method, commandClass, ctx));
         }
 
         tail = tail == null
@@ -176,48 +221,71 @@ public class Transformer {
           encounteredNonOptional = true;
           canExec = false;
         } else {
-          if (encounteredNonOptional) throw new CommandException("Cannot have an Optional before required argument");
+          if (encounteredNonOptional) {
+            throw new CommandException("Cannot have an Optional before required argument");
+          }
         }
       }
-      }
+    }
     cmd = tail == null
         ? cmd
         : cmd.then(tail);
 
     if (canExec) {
-      cmd.executes(ctx -> getCommandEval(method, commandClass, ctx));
+      cmd.executes(ctx -> commandEval(method, commandClass, ctx));
     }
     return cmd;
   }
 
-  public static @NotNull List<LiteralArgumentBuilder<CommandSourceStack>> transform(@NotNull Object commandClass) throws CommandException {
+  public static @NotNull List<LiteralArgumentBuilder<CommandSourceStack>> transform(
+      @NotNull Object commandClass) throws CommandException {
     Objects.requireNonNull(commandClass, "commandClass");
 
     List<LiteralArgumentBuilder<CommandSourceStack>> commands = new ArrayList<>();
     HashMap<String, LiteralArgumentBuilder<CommandSourceStack>> commandGroupMap = new HashMap<>();
 
     for (Method method : commandClass.getClass().getMethods()) {
-      if (!method.isAnnotationPresent(CommandGroup.class)) continue;
-      if (method.isAnnotationPresent(Command.class)) throw new CommandException("CommandGroup cannot be a Command");
-      if (!Utils.typeIsBool(method.getReturnType())) throw new CommandException("Command must return a boolean");
-      if (!(method.canAccess(commandClass))) throw new CommandException("Method must be public");
+      if (!method.isAnnotationPresent(CommandGroup.class)) {
+        continue;
+      }
+      if (method.isAnnotationPresent(Command.class)) {
+        throw new CommandException("CommandGroup cannot be a Command");
+      }
+      if (!Utils.typeIsBool(method.getReturnType())) {
+        throw new CommandException("Command must return a boolean");
+      }
+      if (!(method.canAccess(commandClass))) {
+        throw new CommandException("Method must be public");
+      }
       commandGroupMap.put(method.getName(), createLiteralArgumentBuilder(method, commandClass));
     }
 
     for (Method method : commandClass.getClass().getMethods()) {
-      if (!method.isAnnotationPresent(Command.class)) continue;
-      if (method.isAnnotationPresent(CommandGroup.class)) throw new CommandException("Command cannot be a CommandGroup");
-      if (!Utils.typeIsBool(method.getReturnType())) throw new CommandException("Command must return a boolean");
-      if (!(method.canAccess(commandClass))) throw new CommandException("Method must be public");
+      if (!method.isAnnotationPresent(Command.class)) {
+        continue;
+      }
+      if (method.isAnnotationPresent(CommandGroup.class)) {
+        throw new CommandException("Command cannot be a CommandGroup");
+      }
+      if (!Utils.typeIsBool(method.getReturnType())) {
+        throw new CommandException("Command must return a boolean");
+      }
+      if (!(method.canAccess(commandClass))) {
+        throw new CommandException("Method must be public");
+      }
 
-      LiteralArgumentBuilder<CommandSourceStack> cmd = createLiteralArgumentBuilder(method, commandClass);
+      LiteralArgumentBuilder<CommandSourceStack> cmd = createLiteralArgumentBuilder(method,
+          commandClass);
       String parentName = method.getAnnotation(Command.class).parent();
 
       if (parentName.equals("")) {
         commands.add(cmd);
       } else {
         LiteralArgumentBuilder<CommandSourceStack> parent = commandGroupMap.get(parentName);
-        if (parent == null) throw new CommandException("Command parent " + parentName + "does not exists for " + method.getName() +".");
+        if (parent == null) {
+          throw new CommandException(
+              "Command parent " + parentName + "does not exists for " + method.getName() + ".");
+        }
         parent.then(cmd);
       }
     }
