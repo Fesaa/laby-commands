@@ -23,7 +23,8 @@ public class Utils {
   }
 
   public static String stackTraceToString(StackTraceElement[] stackTraceElements) {
-    return Arrays.stream(stackTraceElements).map(StackTraceElement::toString).collect(Collectors.joining("\n"));
+    return Arrays.stream(stackTraceElements).map(StackTraceElement::toString)
+        .collect(Collectors.joining("\n"));
   }
 
   public static <T> String mixer(String text, CyclicCollection<T> cyclicCollection) {

@@ -1,16 +1,16 @@
 package art.ameliah.brigadier.v1_20_1;
 
-import art.ameliah.brigadier.core.models.CommandContext;
+import art.ameliah.brigadier.core.models.CommandSource;
 import java.lang.reflect.Parameter;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class VersionedCommandContext extends CommandContext {
+public class VersionedCommandSource extends CommandSource {
 
   private final com.mojang.brigadier.context.CommandContext<SharedSuggestionProvider> ctx;
   private final Parameter parameter;
 
-  public VersionedCommandContext(
+  public VersionedCommandSource(
       com.mojang.brigadier.context.CommandContext<SharedSuggestionProvider> ctx) {
     this.ctx = ctx;
     this.parameter = null;
@@ -18,7 +18,7 @@ public class VersionedCommandContext extends CommandContext {
 
   }
 
-  public VersionedCommandContext(
+  public VersionedCommandSource(
       com.mojang.brigadier.context.CommandContext<SharedSuggestionProvider> ctx,
       Parameter parameter) {
     this.ctx = ctx;

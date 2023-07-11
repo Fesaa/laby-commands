@@ -2,6 +2,8 @@ package art.ameliah.brigadier.core;
 
 import art.ameliah.brigadier.core.commands.ColourCommands;
 import art.ameliah.brigadier.core.commands.ComplicatedBranching;
+import art.ameliah.brigadier.core.commands.CustomCommandContextCommands;
+import art.ameliah.brigadier.core.commands.customTypes.MyCustomCommandContext;
 import art.ameliah.brigadier.core.commands.ServerSpecificCommands;
 import art.ameliah.brigadier.core.commands.TestCommands;
 import art.ameliah.brigadier.core.commands.customTypes.Fraction;
@@ -11,14 +13,13 @@ import art.ameliah.brigadier.core.service.CommandService;
 import art.ameliah.brigadier.core.service.DefaultCommandService;
 import net.labymod.api.addon.LabyAddon;
 import net.labymod.api.models.addon.annotation.AddonMain;
-import org.jetbrains.annotations.Nullable;
 
 
 @AddonMain
 public class Brigadier extends LabyAddon<BrigadierConfig> {
 
   private static Brigadier instance;
-  private CommandService commandService;
+  private CommandService<MyCustomCommandContext> commandService;
 
   public Brigadier() {
     instance = this;
@@ -44,11 +45,12 @@ public class Brigadier extends LabyAddon<BrigadierConfig> {
     commandService.registerCommand(new ColourCommands());
     commandService.registerCommand(new ComplicatedBranching());
     commandService.registerCommand(new ServerSpecificCommands("play.cubecraft.net"));
+    commandService.registerCommand(new CustomCommandContextCommands());
 
     this.logger().info("Enabled the Addon");
   }
 
-  public CommandService getCommandService() {
+  public CommandService<MyCustomCommandContext> getCommandService() {
     return commandService;
   }
 

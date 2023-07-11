@@ -5,7 +5,6 @@ import art.ameliah.brigadier.core.models.custumTypes.CustomSuggestion;
 import art.ameliah.brigadier.core.models.custumTypes.CustomSuggestions;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
 import art.ameliah.brigadier.core.utils.Utils;
-import art.ameliah.brigadier.v1_20_1.VersionedCommandContext;
 import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -22,9 +21,9 @@ import net.minecraft.commands.SharedSuggestionProvider;
 public class CustomArgumentTypeTransformer {
 
 
-  public static <T extends CustomArgumentType<S>, S> ArgumentType<S> transform(
+  public static <T extends CustomArgumentType<S, U>, S, U extends art.ameliah.brigadier.core.models.CommandContext> ArgumentType<S> transform(
       T customArgumentType) {
-    return new ArgumentType<S>() {
+    return new ArgumentType<>() {
 
       @Override
       public Collection<String> getExamples() {
@@ -32,21 +31,25 @@ public class CustomArgumentTypeTransformer {
       }
 
       @Override
-      public <U> CompletableFuture<Suggestions> listSuggestions(final CommandContext<U> context,
+      public <V> CompletableFuture<Suggestions> listSuggestions(final CommandContext<V> context,
           final SuggestionsBuilder builder) {
         if (!(context.getSource() instanceof SharedSuggestionProvider)) {
           return Suggestions.empty();
         }
 
         CommandContext<SharedSuggestionProvider> ctx = (CommandContext<SharedSuggestionProvider>) context;
+        U versionedCtx = ContextTransformer.createCorrectCtx(ctx, null,
+            customArgumentType.getCommandContextClass());
         CompletableFuture<CustomSuggestions> customSuggestionsCompletableFuture = customArgumentType.listSuggestions(
-            new VersionedCommandContext(ctx));
+            versionedCtx);
 
         CustomSuggestions suggestions;
         try {
           suggestions = customSuggestionsCompletableFuture.get();
         } catch (InterruptedException | ExecutionException e) {
-          System.out.println("Suggestions couldn't complete. Returning empty;" + Utils.stackTraceToString(e.getStackTrace()));
+          System.out.println(
+              "Suggestions couldn't complete. Returning empty;" + Utils.stackTraceToString(
+                  e.getStackTrace()));
           return Suggestions.empty();
         }
 

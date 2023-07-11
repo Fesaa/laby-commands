@@ -1,11 +1,12 @@
 package art.ameliah.brigadier.core.commands.customTypes;
 
+import art.ameliah.brigadier.core.models.CommandContext;
 import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
 import java.util.Collection;
 import java.util.List;
 
-public class FractionArgument implements CustomArgumentType<Float> {
+public class FractionArgument implements CustomArgumentType<Float, CommandContext> {
 
   @Override
   public Collection<String> getExamples() {
@@ -36,8 +37,14 @@ public class FractionArgument implements CustomArgumentType<Float> {
           : Float.parseFloat(denominatorString.toString().trim());
       return numerator / denominator;
     } catch (NumberFormatException e) {
-      throw new SyntaxException("Expected a fraction got %s / %s", numeratorString, denominatorString);
+      throw new SyntaxException("Expected a fraction got %s / %s", numeratorString,
+          denominatorString);
     }
+  }
+
+  @Override
+  public Class<CommandContext> getCommandContextClass() {
+    return CommandContext.class;
   }
 
   @Override

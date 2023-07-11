@@ -1,12 +1,13 @@
 package art.ameliah.brigadier.core.service;
 
 import art.ameliah.brigadier.core.models.CommandClass;
+import art.ameliah.brigadier.core.models.CommandContext;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultCommandService extends CommandService {
+public class DefaultCommandService<T extends CommandContext> extends CommandService<T> {
 
   @Override
-  public boolean registerCommand(@NotNull CommandClass commandClass) {
+  public boolean registerCommand(@NotNull CommandClass<T> commandClass) {
     return false;
   }
 
@@ -16,7 +17,7 @@ public class DefaultCommandService extends CommandService {
   }
 
   @Override
-  public boolean removeCommand(@NotNull CommandClass commandClass) {
+  public boolean removeCommand(@NotNull CommandClass<T> commandClass) {
     return false;
   }
 }

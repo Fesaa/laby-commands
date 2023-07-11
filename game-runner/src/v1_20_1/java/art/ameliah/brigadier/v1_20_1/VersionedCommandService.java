@@ -1,6 +1,7 @@
 package art.ameliah.brigadier.v1_20_1;
 
 import art.ameliah.brigadier.core.models.CommandClass;
+import art.ameliah.brigadier.core.models.CommandContext;
 import art.ameliah.brigadier.core.models.exceptions.CommandException;
 import art.ameliah.brigadier.core.service.CommandService;
 import art.ameliah.brigadier.v1_20_1.transformers.CommandClassTransformer;
@@ -18,11 +19,11 @@ import org.jetbrains.annotations.NotNull;
 
 @Singleton
 @Implements(CommandService.class)
-public class VersionedCommandService extends CommandService {
+public class VersionedCommandService<T extends CommandContext> extends CommandService<T> {
 
-  private static VersionedCommandService instance;
+  private static VersionedCommandService<?> instance;
   private final List<LiteralArgumentBuilder<SharedSuggestionProvider>> commandList = new ArrayList<>();
-  private final HashMap<CommandClass, List<LiteralArgumentBuilder<SharedSuggestionProvider>>> transformerHashMap = new HashMap<>();
+  private final HashMap<CommandClass<T>, List<LiteralArgumentBuilder<SharedSuggestionProvider>>> transformerHashMap = new HashMap<>();
   public CommandDispatcher<SharedSuggestionProvider> dispatcher;
 
   @Inject
@@ -30,7 +31,7 @@ public class VersionedCommandService extends CommandService {
     instance = this;
   }
 
-  public static VersionedCommandService get() {
+  public static VersionedCommandService<?> get() {
     return instance;
   }
 
@@ -39,10 +40,10 @@ public class VersionedCommandService extends CommandService {
   }
 
   @Override
-  public boolean registerCommand(@NotNull CommandClass commandClass) {
+  public boolean registerCommand(@NotNull CommandClass<T> commandClass) {
     Objects.requireNonNull(commandClass, "commandClass");
 
-    CommandClassTransformer<CommandClass> transformer;
+    CommandClassTransformer<CommandClass<T>, T> transformer;
     List<LiteralArgumentBuilder<SharedSuggestionProvider>> transformedCommands;
     try {
       transformer = new CommandClassTransformer<>(commandClass);
@@ -78,7 +79,7 @@ public class VersionedCommandService extends CommandService {
   }
 
   @Override
-  public boolean removeCommand(@NotNull CommandClass commandClass) {
+  public boolean removeCommand(@NotNull CommandClass<T> commandClass) {
     Objects.requireNonNull(commandClass, "commandClass");
 
     List<LiteralArgumentBuilder<SharedSuggestionProvider>> commands = this.transformerHashMap.get(

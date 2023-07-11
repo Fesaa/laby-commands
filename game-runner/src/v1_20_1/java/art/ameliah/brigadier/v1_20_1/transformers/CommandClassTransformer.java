@@ -20,7 +20,6 @@ import art.ameliah.brigadier.core.models.annotations.Optional;
 import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
 import art.ameliah.brigadier.core.models.exceptions.CommandException;
 import art.ameliah.brigadier.core.utils.Utils;
-import art.ameliah.brigadier.v1_20_1.VersionedCommandContext;
 import art.ameliah.brigadier.v1_20_1.VersionedCommandService;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
@@ -46,7 +45,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 
 
-public class CommandClassTransformer<T extends CommandClass> {
+public class CommandClassTransformer<T extends CommandClass<S>, S extends art.ameliah.brigadier.core.models.CommandContext> {
 
   private final ChatExecutor chatExecutor = Laby.labyAPI().minecraft().chatExecutor();
 
@@ -58,56 +57,6 @@ public class CommandClassTransformer<T extends CommandClass> {
   public CommandClassTransformer(T commandClass) throws CommandException {
     this.commandClass = commandClass;
     this.populateCheckMaps();
-  }
-
-  static void validateMethod(Method method) throws CommandException {
-    Parameter[] parameters = method.getParameters();
-    int size = parameters.length;
-    if (size == 0) {
-      throw new CommandException(
-          "Commands must include, and start with, an argument with type CommandContext. (%s)",
-          method);
-    }
-
-    boolean hasPassedOptional = false;
-    for (int i = 0; i < size; i++) {
-      Parameter parameter = parameters[i];
-
-      if (i == 0 && !parameter.getType()
-          .equals(art.ameliah.brigadier.core.models.CommandContext.class)) {
-        throw new CommandException("First argument must be CommandContext. (%s)", method);
-      }
-
-      if (parameter.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class)
-          && i != 0) {
-        throw new CommandException("CommandContext can only be used as the first argument. (%s)",
-            method);
-      }
-
-      if (parameter.isAnnotationPresent(Greedy.class)) {
-        if (i != size - 1) {
-          throw new CommandException("Greedy can only be used on the last argument. (%s)", method);
-        }
-        if (!parameter.getType().equals(String.class)) {
-          throw new CommandException("Greedy can only be used on Strings. (%s)", method);
-        }
-      }
-
-      if (parameter.isAnnotationPresent(Optional.class)) {
-        hasPassedOptional = true;
-      } else if (hasPassedOptional) {
-        throw new CommandException(
-            "Optional arguments can only be succeeded by optional arguments. (%s)", method);
-      }
-
-      if (parameter.isAnnotationPresent(Bounded.class) &&
-          !(Utils.typeIsFloat(parameter.getType()) ||
-              Utils.typeIsDouble(parameter.getType()) ||
-              Utils.typeIsInt(parameter.getType()))) {
-        throw new CommandException("Bounded can only be used on Integers, Floats and Doubles. (%s)",
-            method);
-      }
-    }
   }
 
   static ArgumentType<?> argumentTypeFactory(Parameter parameter) throws CommandException {
@@ -140,13 +89,63 @@ public class CommandClassTransformer<T extends CommandClass> {
       return parameter.isAnnotationPresent(Greedy.class) ? greedyString() : word();
     }
 
-    CustomArgumentType<?> customArgumentType = VersionedCommandService.get()
+    CustomArgumentType<?, ?> customArgumentType = VersionedCommandService.get()
         .getCustomArgument(type);
     if (customArgumentType != null) {
       return CustomArgumentTypeTransformer.transform(customArgumentType);
     }
 
     return null;
+  }
+
+  private void validateMethod(Method method) throws CommandException {
+    Parameter[] parameters = method.getParameters();
+    int size = parameters.length;
+    if (size == 0) {
+      throw new CommandException(
+          "Commands must include, and start with, an argument with type CommandContext. (%s)",
+          method);
+    }
+
+    boolean hasPassedOptional = false;
+    for (int i = 0; i < size; i++) {
+      Parameter parameter = parameters[i];
+
+      if (i == 0 && !parameter.getType()
+          .equals(this.commandClass.getCommandContextClass())) {
+        throw new CommandException("First argument must be CommandContext. (%s)", method);
+      }
+
+      if (parameter.getType().equals(this.commandClass.getCommandContextClass())
+          && i != 0) {
+        throw new CommandException("CommandContext can only be used as the first argument. (%s)",
+            method);
+      }
+
+      if (parameter.isAnnotationPresent(Greedy.class)) {
+        if (i != size - 1) {
+          throw new CommandException("Greedy can only be used on the last argument. (%s)", method);
+        }
+        if (!parameter.getType().equals(String.class)) {
+          throw new CommandException("Greedy can only be used on Strings. (%s)", method);
+        }
+      }
+
+      if (parameter.isAnnotationPresent(Optional.class)) {
+        hasPassedOptional = true;
+      } else if (hasPassedOptional) {
+        throw new CommandException(
+            "Optional arguments can only be succeeded by optional arguments. (%s)", method);
+      }
+
+      if (parameter.isAnnotationPresent(Bounded.class) &&
+          !(Utils.typeIsFloat(parameter.getType()) ||
+              Utils.typeIsDouble(parameter.getType()) ||
+              Utils.typeIsInt(parameter.getType()))) {
+        throw new CommandException("Bounded can only be used on Integers, Floats and Doubles. (%s)",
+            method);
+      }
+    }
   }
 
   public void populateCheckMaps() throws CommandException {
@@ -161,7 +160,8 @@ public class CommandClassTransformer<T extends CommandClass> {
         for (Check check : method.getAnnotationsByType(Check.class)) {
           try {
             Method checkMethod = this.commandClass.getClass()
-                .getMethod(check.method(), art.ameliah.brigadier.core.models.CommandContext.class);
+                .getMethod(check.method(), this.commandClass.getCommandContextClass());
+            Arrays.stream(this.commandClass.getClass().getMethods()).forEach(System.out::println);
             if (!checkMethod.canAccess(this.commandClass)) {
               throw new CommandException("CheckMethod method (%s) must be public for %s.",
                   check.method(), method.getName());
@@ -241,7 +241,7 @@ public class CommandClassTransformer<T extends CommandClass> {
 
   private LiteralArgumentBuilder<SharedSuggestionProvider> createLiteralArgumentBuilder(
       @NotNull Method method) throws CommandException {
-    validateMethod(method);
+    this.validateMethod(method);
 
     LiteralArgumentBuilder<SharedSuggestionProvider> cmd = LiteralArgumentBuilder.literal(
         method.getName());
@@ -252,7 +252,7 @@ public class CommandClassTransformer<T extends CommandClass> {
       for (AutoComplete autoComplete : method.getAnnotationsByType(AutoComplete.class)) {
         try {
           Method autoCompleteFunc = this.commandClass.getClass().getMethod(autoComplete.method(),
-              art.ameliah.brigadier.core.models.CommandContext.class);
+              this.commandClass.getCommandContextClass());
           if (!autoCompleteFunc.canAccess(this.commandClass)) {
             throw new CommandException("Autocomplete method (%s) must be public for %s.",
                 autoComplete.method(), method.getName());
@@ -324,7 +324,8 @@ public class CommandClassTransformer<T extends CommandClass> {
   }
 
   private int commandEval(Method method, CommandContext<SharedSuggestionProvider> ctx) {
-    VersionedCommandContext versionedCtx = new VersionedCommandContext(ctx);
+    S versionedCtx = ContextTransformer.createCorrectCtx(ctx, null,
+        this.commandClass.getCommandContextClass());
 
     if (!this.commandClass.classCheck(versionedCtx)) {
       this.chatExecutor.displayClientMessage(this.commandClass.noPermissionComponent());
@@ -366,7 +367,7 @@ public class CommandClassTransformer<T extends CommandClass> {
     values.add(versionedCtx);
     Arrays.stream(method.getParameters())
         .filter(
-            par -> !par.getType().equals(art.ameliah.brigadier.core.models.CommandContext.class))
+            par -> !par.getType().equals(this.commandClass.getCommandContextClass()))
         .forEach(par -> {
           try {
 
@@ -406,9 +407,13 @@ public class CommandClassTransformer<T extends CommandClass> {
     Object result;
 
     try {
-      result = func.invoke(this.commandClass, new VersionedCommandContext(context, parameter));
+      result = func.invoke(this.commandClass,
+          ContextTransformer.createCorrectCtx(context, parameter,
+              this.commandClass.getCommandContextClass()));
     } catch (Exception e) {
-      System.out.println("Suggestions couldn't complete. Returning empty;" + Utils.stackTraceToString(e.getStackTrace()));
+      System.out.println(
+          "Suggestions couldn't complete. Returning empty;" + Utils.stackTraceToString(
+              e.getStackTrace()));
       return Suggestions.empty();
     }
 

@@ -6,13 +6,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
-public interface CustomArgumentType<T> {
+public interface CustomArgumentType<T, S extends CommandContext> {
 
   T parse(String string) throws SyntaxException;
 
+  Class<S> getCommandContextClass();
+
   boolean stringCollector(char c);
 
-  default CompletableFuture<CustomSuggestions> listSuggestions(final CommandContext ctx) {
+  default CompletableFuture<CustomSuggestions> listSuggestions(final S ctx) {
     return CustomSuggestions.empty();
   }
 

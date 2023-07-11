@@ -1,12 +1,12 @@
 package art.ameliah.brigadier.core.commands;
 
+import art.ameliah.brigadier.core.commands.customTypes.MyCustomCommandContext;
 import art.ameliah.brigadier.core.models.CommandClass;
-import art.ameliah.brigadier.core.models.CommandContext;
 import art.ameliah.brigadier.core.models.annotations.Command;
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.component.format.NamedTextColor;
 
-public class ServerSpecificCommands extends CommandClass {
+public class ServerSpecificCommands extends CommandClass<MyCustomCommandContext> {
 
   private final String ip;
 
@@ -15,12 +15,12 @@ public class ServerSpecificCommands extends CommandClass {
   }
 
   @Override
-  public boolean classCheck(CommandContext ctx) {
+  public boolean classCheck(MyCustomCommandContext ctx) {
     return ctx.getServerData().address().getHost().equals(this.ip);
   }
 
   @Command
-  public boolean hidden(CommandContext ctx) {
+  public boolean hidden(MyCustomCommandContext ctx) {
     ctx.displayClientMessage("Wow! This only works on: " + this.ip);
     return true;
   }
@@ -29,5 +29,10 @@ public class ServerSpecificCommands extends CommandClass {
   public Component noPermissionComponent() {
     return Component.text("You do not have the required permissions to use this command.",
         NamedTextColor.RED);
+  }
+
+  @Override
+  public Class<MyCustomCommandContext> getCommandContextClass() {
+    return MyCustomCommandContext.class;
   }
 }
