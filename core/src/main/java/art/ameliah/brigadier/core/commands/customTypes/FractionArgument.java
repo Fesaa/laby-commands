@@ -36,7 +36,7 @@ public class FractionArgument implements CustomArgumentType<Float> {
           : Float.parseFloat(denominatorString.toString().trim());
       return numerator / denominator;
     } catch (NumberFormatException e) {
-      throw new SyntaxException("Expected a fraction.");
+      throw new SyntaxException("Expected a fraction got %s / %s", numeratorString, denominatorString);
     }
   }
 

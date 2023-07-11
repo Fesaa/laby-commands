@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class Brigadier extends LabyAddon<BrigadierConfig> {
 
   private static Brigadier instance;
-  private @Nullable CommandService commandService;
+  private CommandService commandService;
 
   public Brigadier() {
     instance = this;
@@ -48,7 +48,7 @@ public class Brigadier extends LabyAddon<BrigadierConfig> {
     this.logger().info("Enabled the Addon");
   }
 
-  public @Nullable CommandService getCommandService() {
+  public CommandService getCommandService() {
     return commandService;
   }
 
