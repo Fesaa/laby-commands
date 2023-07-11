@@ -1,6 +1,5 @@
 package art.ameliah.brigadier.core.models;
 
-import java.util.Collection;
 import net.labymod.api.Laby;
 import net.labymod.api.LabyAPI;
 import net.labymod.api.client.component.Component;
@@ -43,10 +42,6 @@ public abstract class CommandContext {
    */
   public abstract String getInput();
 
-  /**
-   * @return Currently online players
-   */
-  public abstract Collection<String> getOnlinePlayerNames();
 
   /**
    * @return The player executing the command
@@ -59,7 +54,12 @@ public abstract class CommandContext {
   /**
    * @return The position of the executing player
    */
-  public abstract FloatVector3 getPosition();
+  public FloatVector3 getPosition() {
+    ClientPlayer player = this.getClientPlayer();
+    return player == null ? null : player.position();
+  }
+
+  ;
 
   public ServerData getServerData() {
     return this.labyAPI.serverController().getCurrentServerData();

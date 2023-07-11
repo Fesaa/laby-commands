@@ -2,19 +2,16 @@ package art.ameliah.brigadier.v1_20_1;
 
 import art.ameliah.brigadier.core.models.CommandContext;
 import java.lang.reflect.Parameter;
-import java.util.Collection;
-import net.labymod.api.util.math.vector.FloatVector3;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 
 public class VersionedCommandContext extends CommandContext {
 
-  private final com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx;
+  private final com.mojang.brigadier.context.CommandContext<SharedSuggestionProvider> ctx;
   private final Parameter parameter;
 
   public VersionedCommandContext(
-      com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx) {
+      com.mojang.brigadier.context.CommandContext<SharedSuggestionProvider> ctx) {
     this.ctx = ctx;
     this.parameter = null;
 
@@ -22,7 +19,8 @@ public class VersionedCommandContext extends CommandContext {
   }
 
   public VersionedCommandContext(
-      com.mojang.brigadier.context.CommandContext<CommandSourceStack> ctx, Parameter parameter) {
+      com.mojang.brigadier.context.CommandContext<SharedSuggestionProvider> ctx,
+      Parameter parameter) {
     this.ctx = ctx;
     this.parameter = parameter;
   }
@@ -49,16 +47,5 @@ public class VersionedCommandContext extends CommandContext {
   @Override
   public String getInput() {
     return this.ctx.getInput();
-  }
-
-  @Override
-  public Collection<String> getOnlinePlayerNames() {
-    return this.ctx.getSource().getOnlinePlayerNames();
-  }
-
-  @Override
-  public FloatVector3 getPosition() {
-    Vec3 pos = this.ctx.getSource().getPosition();
-    return new FloatVector3((float) pos.x, (float) pos.y, (float) pos.z);
   }
 }

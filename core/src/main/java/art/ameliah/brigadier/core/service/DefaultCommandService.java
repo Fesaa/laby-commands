@@ -11,6 +11,11 @@ public class DefaultCommandService extends CommandService {
   }
 
   @Override
+  public boolean isCustomCommand(String root) {
+    return false;
+  }
+
+  @Override
   public boolean removeCommand(@NotNull CommandClass commandClass) {
     return false;
   }

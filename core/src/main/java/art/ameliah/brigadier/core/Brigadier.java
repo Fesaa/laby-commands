@@ -4,6 +4,8 @@ import art.ameliah.brigadier.core.commands.ColourCommands;
 import art.ameliah.brigadier.core.commands.ComplicatedBranching;
 import art.ameliah.brigadier.core.commands.ServerSpecificCommands;
 import art.ameliah.brigadier.core.commands.TestCommands;
+import art.ameliah.brigadier.core.commands.customTypes.Fraction;
+import art.ameliah.brigadier.core.commands.customTypes.FractionArgument;
 import art.ameliah.brigadier.core.generated.DefaultReferenceStorage;
 import art.ameliah.brigadier.core.service.CommandService;
 import art.ameliah.brigadier.core.service.DefaultCommandService;
@@ -35,6 +37,8 @@ public class Brigadier extends LabyAddon<BrigadierConfig> {
     if (commandService == null) {
       commandService = new DefaultCommandService();
     }
+
+    commandService.registerCustomArgumentType(Fraction.class, new FractionArgument());
 
     commandService.registerCommand(new TestCommands());
     commandService.registerCommand(new ColourCommands());

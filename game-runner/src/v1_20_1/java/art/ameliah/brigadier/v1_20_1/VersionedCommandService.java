@@ -1,8 +1,10 @@
 package art.ameliah.brigadier.v1_20_1;
 
-import art.ameliah.brigadier.core.CommandException;
 import art.ameliah.brigadier.core.models.CommandClass;
+import art.ameliah.brigadier.core.models.exceptions.CommandException;
 import art.ameliah.brigadier.core.service.CommandService;
+import art.ameliah.brigadier.v1_20_1.transformers.CommandClassTransformer;
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,7 +13,7 @@ import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.labymod.api.models.Implements;
-import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 
 @Singleton
@@ -19,9 +21,9 @@ import org.jetbrains.annotations.NotNull;
 public class VersionedCommandService extends CommandService {
 
   private static VersionedCommandService instance;
-
-  private final List<LiteralArgumentBuilder<CommandSourceStack>> commandList = new ArrayList<>();
-  private final HashMap<CommandClass, List<LiteralArgumentBuilder<CommandSourceStack>>> transformerHashMap = new HashMap<>();
+  private final List<LiteralArgumentBuilder<SharedSuggestionProvider>> commandList = new ArrayList<>();
+  private final HashMap<CommandClass, List<LiteralArgumentBuilder<SharedSuggestionProvider>>> transformerHashMap = new HashMap<>();
+  public CommandDispatcher<SharedSuggestionProvider> dispatcher;
 
   @Inject
   public VersionedCommandService() {
@@ -32,7 +34,7 @@ public class VersionedCommandService extends CommandService {
     return instance;
   }
 
-  public List<LiteralArgumentBuilder<CommandSourceStack>> getCommandList() {
+  public List<LiteralArgumentBuilder<SharedSuggestionProvider>> getCommandList() {
     return commandList;
   }
 
@@ -41,7 +43,7 @@ public class VersionedCommandService extends CommandService {
     Objects.requireNonNull(commandClass, "commandClass");
 
     CommandClassTransformer<CommandClass> transformer;
-    List<LiteralArgumentBuilder<CommandSourceStack>> transformedCommands;
+    List<LiteralArgumentBuilder<SharedSuggestionProvider>> transformedCommands;
     try {
       transformer = new CommandClassTransformer<>(commandClass);
     } catch (CommandException e) {
@@ -66,10 +68,20 @@ public class VersionedCommandService extends CommandService {
   }
 
   @Override
+  public boolean isCustomCommand(String root) {
+    for (LiteralArgumentBuilder<SharedSuggestionProvider> cmd : this.commandList) {
+      if (cmd.getLiteral().equals(root)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public boolean removeCommand(@NotNull CommandClass commandClass) {
     Objects.requireNonNull(commandClass, "commandClass");
 
-    List<LiteralArgumentBuilder<CommandSourceStack>> commands = this.transformerHashMap.get(
+    List<LiteralArgumentBuilder<SharedSuggestionProvider>> commands = this.transformerHashMap.get(
         commandClass);
     if (commands == null) {
       return false;

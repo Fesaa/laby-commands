@@ -1,5 +1,6 @@
 package art.ameliah.brigadier.core.commands;
 
+import art.ameliah.brigadier.core.commands.customTypes.Fraction;
 import art.ameliah.brigadier.core.models.CommandClass;
 import art.ameliah.brigadier.core.models.CommandContext;
 import art.ameliah.brigadier.core.models.annotations.AutoComplete;
@@ -57,6 +58,13 @@ public class TestCommands extends CommandClass {
   @Command
   public boolean optionals(CommandContext ctx, String name, String other, @Optional String third) {
     ctx.displayClientMessage(name + " " + other + (third == null ? "" : " " + third));
+    return true;
+  }
+
+  @Command
+  public boolean fractionCommand(CommandContext ctx, Fraction fractionArgument, Integer rest) {
+    ctx.displayClientMessage(
+        "Your fraction has a value of: " + fractionArgument.get() + " and rest: " + rest);
     return true;
   }
 }
