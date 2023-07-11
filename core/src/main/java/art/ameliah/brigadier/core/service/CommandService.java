@@ -19,7 +19,16 @@ public class CommandService<T extends CommandClass> {
 
   public void registerCommand(@NotNull T commandClass) {
     Objects.requireNonNull(commandClass, "commandClass");
-    commandClasses.add(commandClass);
+    this.commandClasses.add(commandClass);
+  }
+
+  /**
+   * Will only go in effect on the next world join.
+   */
+  public boolean removeCommand(@NotNull T commandClass) {
+    Objects.requireNonNull(commandClass, "commandClass");
+
+    return this.commandClasses.remove(commandClass);
   }
 
   public List<T> getCommandClasses() {

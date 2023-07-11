@@ -5,6 +5,7 @@ import net.labymod.api.Laby;
 import net.labymod.api.LabyAPI;
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.entity.player.ClientPlayer;
+import net.labymod.api.client.network.server.ServerData;
 import net.labymod.api.reference.annotation.Referenceable;
 import net.labymod.api.util.math.vector.FloatVector3;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +60,10 @@ public abstract class CommandContext {
    * @return The position of the executing player
    */
   public abstract FloatVector3 getPosition();
+
+  public ServerData getServerData() {
+    return this.labyAPI.serverController().getCurrentServerData();
+  }
 
   public void sendChatMessage(String message) {
     this.labyAPI.minecraft().chatExecutor().chat(message);
