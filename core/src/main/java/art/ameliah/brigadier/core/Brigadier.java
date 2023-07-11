@@ -4,17 +4,19 @@ import art.ameliah.brigadier.core.commands.ColourCommands;
 import art.ameliah.brigadier.core.commands.ComplicatedBranching;
 import art.ameliah.brigadier.core.commands.ServerSpecificCommands;
 import art.ameliah.brigadier.core.commands.TestCommands;
-import art.ameliah.brigadier.core.models.CommandClass;
+import art.ameliah.brigadier.core.generated.DefaultReferenceStorage;
 import art.ameliah.brigadier.core.service.CommandService;
+import art.ameliah.brigadier.core.service.DefaultCommandService;
 import net.labymod.api.addon.LabyAddon;
 import net.labymod.api.models.addon.annotation.AddonMain;
+import org.jetbrains.annotations.Nullable;
 
 
 @AddonMain
 public class Brigadier extends LabyAddon<BrigadierConfig> {
 
   private static Brigadier instance;
-  private final CommandService<CommandClass> commandService = CommandService.defaultCommandService();
+  private @Nullable CommandService commandService;
 
   public Brigadier() {
     instance = this;
@@ -27,6 +29,13 @@ public class Brigadier extends LabyAddon<BrigadierConfig> {
   @Override
   protected void enable() {
     this.registerSettingCategory();
+
+    DefaultReferenceStorage storage = this.referenceStorageAccessor();
+    commandService = storage.getCommandService();
+    if (commandService == null) {
+      commandService = new DefaultCommandService();
+    }
+
     commandService.registerCommand(new TestCommands());
     commandService.registerCommand(new ColourCommands());
     commandService.registerCommand(new ComplicatedBranching());
@@ -35,7 +44,7 @@ public class Brigadier extends LabyAddon<BrigadierConfig> {
     this.logger().info("Enabled the Addon");
   }
 
-  public CommandService<CommandClass> getCommandService() {
+  public @Nullable CommandService getCommandService() {
     return commandService;
   }
 

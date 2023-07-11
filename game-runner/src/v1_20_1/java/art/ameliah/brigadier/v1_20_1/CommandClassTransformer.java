@@ -139,7 +139,9 @@ public class CommandClassTransformer<T extends CommandClass> {
 
   public void populateCheckMaps() throws CommandException {
     for (Method method : this.commandClass.getClass().getMethods()) {
-      if (!method.isAnnotationPresent(Command.class)) continue;
+      if (!method.isAnnotationPresent(Command.class)) {
+        continue;
+      }
 
       if (method.isAnnotationPresent(Check.class) || method.isAnnotationPresent(
           CheckContainer.class)) {

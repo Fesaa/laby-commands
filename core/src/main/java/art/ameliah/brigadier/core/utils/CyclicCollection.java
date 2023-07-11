@@ -1,11 +1,11 @@
 package art.ameliah.brigadier.core.utils;
 
-import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 public class CyclicCollection<T> implements Collection<T> {
 
