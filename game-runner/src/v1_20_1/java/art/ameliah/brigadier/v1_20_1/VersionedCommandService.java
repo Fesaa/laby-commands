@@ -1,6 +1,5 @@
 package art.ameliah.brigadier.v1_20_1;
 
-import art.ameliah.brigadier.core.Brigadier;
 import art.ameliah.brigadier.core.CommandException;
 import art.ameliah.brigadier.core.models.CommandClass;
 import art.ameliah.brigadier.core.service.CommandService;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import net.labymod.api.Laby;
 import net.labymod.api.models.Implements;
 import net.minecraft.commands.CommandSourceStack;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +37,7 @@ public class VersionedCommandService extends CommandService {
   }
 
   @Override
-  public boolean registerCommand(@NotNull CommandClass commandClass){
+  public boolean registerCommand(@NotNull CommandClass commandClass) {
     Objects.requireNonNull(commandClass, "commandClass");
 
     CommandClassTransformer<CommandClass> transformer;
@@ -47,7 +45,8 @@ public class VersionedCommandService extends CommandService {
     try {
       transformer = new CommandClassTransformer<>(commandClass);
     } catch (CommandException e) {
-      System.out.println("An exception occurred initialising CommandClassTransformer for " + commandClass);
+      System.out.println(
+          "An exception occurred initialising CommandClassTransformer for " + commandClass);
       e.printStackTrace();
       return false;
     }
@@ -63,7 +62,7 @@ public class VersionedCommandService extends CommandService {
     this.commandList.addAll(transformedCommands);
     this.commandClasses.add(commandClass);
     this.transformerHashMap.put(commandClass, transformedCommands);
-    return false;
+    return true;
   }
 
   @Override
