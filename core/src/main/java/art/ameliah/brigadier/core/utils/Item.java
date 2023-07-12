@@ -1,15 +1,34 @@
 package art.ameliah.brigadier.core.utils;
 
-public interface Item<T> {
+public class Item<T> {
 
-  boolean hasParent();
+  protected Item<T> parent;
 
-  Item<T> getParent();
+  protected T self;
 
-  void setParent(Item<T> parent);
+  public Item(T self, Item<T> parent) {
+    this.self = self;
+    this.parent = parent;
+  }
 
-  void updateSelf(T item);
+  public boolean hasParent() {
+    return this.parent == null;
+  };
 
-  T getSelf();
+  public Item<T> getParent() {
+    return parent;
+  };
+
+  public void setParent(Item<T> parent) {
+    this.parent = parent;
+  };
+
+  public void updateSelf(T self) {
+    this.self = self;
+  };
+
+  public T getSelf() {
+    return self;
+  };
 
 }

@@ -23,7 +23,6 @@ import art.ameliah.brigadier.core.utils.DequeCollector;
 import art.ameliah.brigadier.core.utils.Item;
 import art.ameliah.brigadier.core.utils.Utils;
 import art.ameliah.brigadier.v1_20_1.VersionedCommandService;
-import art.ameliah.brigadier.v1_20_1.wrappers.CommandItem;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -233,7 +232,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       Item<LiteralArgumentBuilder<SharedSuggestionProvider>> item = processedCommands.get(
           cmd.getLiteral());
       if (item == null) {
-        item = new CommandItem(cmd, null);
+        item = new Item<>(cmd, null);
       }
 
       String parentName = method.getAnnotation(Command.class).parent();
@@ -252,7 +251,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       Item<LiteralArgumentBuilder<SharedSuggestionProvider>> parentItem = processedCommands.get(
           parentName);
       if (parentItem == null) {
-        parentItem = new CommandItem(parent, null);
+        parentItem = new Item<>(parent, null);
       }
 
       item.setParent(parentItem);
@@ -292,7 +291,10 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       });
     }
 
-    return parentChildMap.keySet().stream().filter(item -> !item.hasParent()).map(Item::getSelf)
+    return parentChildMap.keySet()
+        .stream()
+        .filter(Item::hasParent)
+        .map(Item::getSelf)
         .toList();
   }
 
