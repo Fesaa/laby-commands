@@ -23,9 +23,9 @@ import art.ameliah.brigadier.core.utils.DequeCollector;
 import art.ameliah.brigadier.core.utils.Item;
 import art.ameliah.brigadier.core.utils.Utils;
 import art.ameliah.brigadier.v1_20_1.VersionedCommandService;
+import art.ameliah.brigadier.v1_20_1.wrappers.McCommand;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -67,7 +67,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     this.populateCheckMaps();
   }
 
-  static ArgumentType<?> argumentTypeFactory(Parameter parameter){
+  static ArgumentType<?> argumentTypeFactory(Parameter parameter) {
     Class<?> type = parameter.getType();
     if (Utils.typeIsInt(type)) {
       if (parameter.isAnnotationPresent(Bounded.class)) {
@@ -200,11 +200,11 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     }
   }
 
-  public @NotNull List<LiteralArgumentBuilder<SharedSuggestionProvider>> getCommands()
+  public @NotNull List<McCommand> getCommands()
       throws CommandException {
     Objects.requireNonNull(commandClass, "commandClass");
 
-    HashMap<String, LiteralArgumentBuilder<SharedSuggestionProvider>> commandNodes = new HashMap<>();
+    HashMap<String, McCommand> commandNodes = new HashMap<>();
 
     for (Method method : commandClass.getClass().getDeclaredMethods()) {
       if (!method.isAnnotationPresent(Command.class)) {
@@ -219,17 +219,17 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       commandNodes.put(method.getName(), this.createLiteralArgumentBuilder(method));
     }
 
-    Map<String, Item<LiteralArgumentBuilder<SharedSuggestionProvider>>> processedCommands = new HashMap<>();
+    Map<String, Item<McCommand>> processedCommands = new HashMap<>();
     for (Method method : commandClass.getClass().getDeclaredMethods()) {
       if (!method.isAnnotationPresent(Command.class)) {
         continue;
       }
-      LiteralArgumentBuilder<SharedSuggestionProvider> cmd = commandNodes.get(method.getName());
+      McCommand cmd = commandNodes.get(method.getName());
       if (cmd == null) {
         throw new CommandException("Found a non existing command? (%s)", method);
       }
 
-      Item<LiteralArgumentBuilder<SharedSuggestionProvider>> item = processedCommands.get(
+      Item<McCommand> item = processedCommands.get(
           cmd.getLiteral());
       if (item == null) {
         item = new Item<>(cmd, null);
@@ -241,14 +241,14 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         continue;
       }
 
-      LiteralArgumentBuilder<SharedSuggestionProvider> parent = commandNodes.get(parentName);
+      McCommand parent = commandNodes.get(parentName);
       if (parent == null) {
         throw new CommandException(
             "%s's parent %s doesn't exist or isn't annotated with @Command.", method.getName(),
             parentName);
       }
 
-      Item<LiteralArgumentBuilder<SharedSuggestionProvider>> parentItem = processedCommands.get(
+      Item<McCommand> parentItem = processedCommands.get(
           parentName);
       if (parentItem == null) {
         parentItem = new Item<>(parent, null);
@@ -259,23 +259,23 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       processedCommands.putIfAbsent(parentName, parentItem);
     }
 
-    Map<Item<LiteralArgumentBuilder<SharedSuggestionProvider>>, List<Item<LiteralArgumentBuilder<SharedSuggestionProvider>>>> parentChildMap = new HashMap<>();
-    for (Item<LiteralArgumentBuilder<SharedSuggestionProvider>> item : processedCommands.values()) {
+    Map<Item<McCommand>, List<Item<McCommand>>> parentChildMap = new HashMap<>();
+    for (Item<McCommand> item : processedCommands.values()) {
       parentChildMap.putIfAbsent(item, new ArrayList<>());
-      Item<LiteralArgumentBuilder<SharedSuggestionProvider>> parent = item.getParent();
+      Item<McCommand> parent = item.getParent();
       if (parent != null) {
         parentChildMap.computeIfAbsent(parent, k -> new ArrayList<>()).add(item);
       }
     }
 
-    Deque<Item<LiteralArgumentBuilder<SharedSuggestionProvider>>> stack =
+    Deque<Item<McCommand>> stack =
         parentChildMap.keySet().stream()
             .filter(item -> parentChildMap.get(item).isEmpty())
             .collect(new DequeCollector<>());
 
     while (!stack.isEmpty()) {
-      Item<LiteralArgumentBuilder<SharedSuggestionProvider>> currentItem = stack.pop();
-      Item<LiteralArgumentBuilder<SharedSuggestionProvider>> parent = currentItem.getParent();
+      Item<McCommand> currentItem = stack.pop();
+      Item<McCommand> parent = currentItem.getParent();
       if (parent != null) {
         parent.updateSelf(parent.getSelf().then(currentItem.getSelf()));
         parentChildMap.get(parent).remove(currentItem);
@@ -298,12 +298,11 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         .toList();
   }
 
-  private LiteralArgumentBuilder<SharedSuggestionProvider> createLiteralArgumentBuilder(
+  private McCommand createLiteralArgumentBuilder(
       @NotNull Method method) throws CommandException {
     this.validateMethod(method);
 
-    LiteralArgumentBuilder<SharedSuggestionProvider> cmd = LiteralArgumentBuilder.literal(
-        method.getName());
+    McCommand cmd = McCommand.literal(method.getName());
     HashMap<String, Method> autoCompleteMap = new HashMap<>();
 
     if (method.isAnnotationPresent(AutoComplete.class) || method.isAnnotationPresent(
@@ -501,48 +500,4 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     }
     return builder.buildFuture();
   }
-
-  private static class CommandLink {
-
-    private final String name;
-    private final String parent;
-    private final List<String> children = new ArrayList<>();
-    private LiteralArgumentBuilder<SharedSuggestionProvider> command;
-
-    public CommandLink(String name, LiteralArgumentBuilder<SharedSuggestionProvider> command,
-        String parent) {
-      this.name = name;
-      this.command = command;
-      this.parent = parent;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public LiteralArgumentBuilder<SharedSuggestionProvider> getCommand() {
-      return command;
-    }
-
-    public void setCommand(LiteralArgumentBuilder<SharedSuggestionProvider> command) {
-      this.command = command;
-    }
-
-    public boolean hasParent() {
-      return parent != null;
-    }
-
-    public String getParent() {
-      return parent;
-    }
-
-    public List<String> getChildren() {
-      return children;
-    }
-
-    public void addChild(String child) {
-      this.children.add(child);
-    }
-  }
-
 }

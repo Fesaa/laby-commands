@@ -5,8 +5,8 @@ import art.ameliah.brigadier.core.models.CommandContext;
 import art.ameliah.brigadier.core.models.exceptions.CommandException;
 import art.ameliah.brigadier.core.service.CommandService;
 import art.ameliah.brigadier.v1_20_1.transformers.CommandClassTransformer;
+import art.ameliah.brigadier.v1_20_1.wrappers.McCommand;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,8 +25,8 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
 
   private static final Logger logger = LoggerFactory.getLogger(VersionedCommandService.class);
   private static VersionedCommandService<?> instance;
-  private final List<LiteralArgumentBuilder<SharedSuggestionProvider>> commandList = new ArrayList<>();
-  private final HashMap<CommandClass<T>, List<LiteralArgumentBuilder<SharedSuggestionProvider>>> transformerHashMap = new HashMap<>();
+  private final List<McCommand> commandList = new ArrayList<>();
+  private final HashMap<CommandClass<T>, List<McCommand>> transformerHashMap = new HashMap<>();
   public CommandDispatcher<SharedSuggestionProvider> dispatcher;
 
   @Inject
@@ -38,7 +38,7 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
     return instance;
   }
 
-  public List<LiteralArgumentBuilder<SharedSuggestionProvider>> getCommandList() {
+  public List<McCommand> getCommandList() {
     return commandList;
   }
 
@@ -47,7 +47,7 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
     Objects.requireNonNull(commandClass, "commandClass");
 
     CommandClassTransformer<CommandClass<T>, T> transformer;
-    List<LiteralArgumentBuilder<SharedSuggestionProvider>> transformedCommands;
+    List<McCommand> transformedCommands;
     try {
       transformer = new CommandClassTransformer<>(commandClass);
     } catch (CommandException e) {
@@ -71,7 +71,7 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
 
   @Override
   public boolean isCustomCommand(String root) {
-    for (LiteralArgumentBuilder<SharedSuggestionProvider> cmd : this.commandList) {
+    for (McCommand cmd : this.commandList) {
       if (cmd.getLiteral().equals(root)) {
         return true;
       }
@@ -83,7 +83,7 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
   public boolean removeCommand(@NotNull CommandClass<T> commandClass) {
     Objects.requireNonNull(commandClass, "commandClass");
 
-    List<LiteralArgumentBuilder<SharedSuggestionProvider>> commands = this.transformerHashMap.get(
+    List<McCommand> commands = this.transformerHashMap.get(
         commandClass);
     if (commands == null) {
       return false;
