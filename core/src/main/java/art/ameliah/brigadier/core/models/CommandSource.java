@@ -2,7 +2,10 @@ package art.ameliah.brigadier.core.models;
 
 import net.labymod.api.Laby;
 import net.labymod.api.LabyAPI;
+import net.labymod.api.client.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
+import java.util.Collection;
+import java.util.stream.Stream;
 
 /**
  * First argument in Command callbacks and AutoComplete callbacks
@@ -33,5 +36,15 @@ public abstract class CommandSource {
    * @return The full command string
    */
   public abstract String getInput();
+
+  @NotNull
+  public abstract Stream<ResourceLocation> getAvailableSounds();
+
+  @NotNull
+  public abstract Collection<String> getAllTeams();
+
+  @NotNull
+  public abstract Collection<String> getOnlinePlayerNames();
+
 
 }
