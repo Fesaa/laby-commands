@@ -16,11 +16,14 @@ import javax.inject.Singleton;
 import net.labymod.api.models.Implements;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Singleton
 @Implements(CommandService.class)
 public class VersionedCommandService<T extends CommandContext> extends CommandService<T> {
 
+  private static final Logger logger = LoggerFactory.getLogger(VersionedCommandService.class);
   private static VersionedCommandService<?> instance;
   private final List<LiteralArgumentBuilder<SharedSuggestionProvider>> commandList = new ArrayList<>();
   private final HashMap<CommandClass<T>, List<LiteralArgumentBuilder<SharedSuggestionProvider>>> transformerHashMap = new HashMap<>();
@@ -48,17 +51,15 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
     try {
       transformer = new CommandClassTransformer<>(commandClass);
     } catch (CommandException e) {
-      System.out.println(
-          "An exception occurred initialising CommandClassTransformer for " + commandClass);
-      e.printStackTrace();
+      logger.error("An exception occurred initialising CommandClassTransformer for " + commandClass,
+          e);
       return false;
     }
 
     try {
       transformedCommands = transformer.getCommands();
     } catch (CommandException e) {
-      System.out.println("An exception occurred getting commands for " + commandClass);
-      e.printStackTrace();
+      logger.error("An exception occurred getting commands for " + commandClass, e);
       return false;
     }
 

@@ -3,17 +3,12 @@ package art.ameliah.brigadier.core.commands;
 import art.ameliah.brigadier.core.commands.customTypes.Fraction;
 import art.ameliah.brigadier.core.commands.customTypes.MyCustomCommandContext;
 import art.ameliah.brigadier.core.models.CommandClass;
-import art.ameliah.brigadier.core.models.annotations.AutoComplete;
-import art.ameliah.brigadier.core.models.annotations.Bounded;
-import art.ameliah.brigadier.core.models.annotations.Check;
-import art.ameliah.brigadier.core.models.annotations.Command;
-import art.ameliah.brigadier.core.models.annotations.Greedy;
-import art.ameliah.brigadier.core.models.annotations.Optional;
-import java.util.List;
+import art.ameliah.brigadier.core.models.annotations.*;
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.component.format.NamedTextColor;
 import net.labymod.api.client.entity.player.ClientPlayer;
 import net.labymod.api.client.entity.player.GameMode;
+import java.util.List;
 
 public class TestCommands extends CommandClass<MyCustomCommandContext> {
 

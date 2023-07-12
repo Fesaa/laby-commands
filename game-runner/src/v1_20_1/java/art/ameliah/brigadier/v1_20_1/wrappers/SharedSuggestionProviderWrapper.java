@@ -6,7 +6,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -19,7 +18,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.status.ServerStatus.Players;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.flag.FeatureFlagSet;
@@ -61,6 +59,7 @@ public class SharedSuggestionProviderWrapper implements SharedSuggestionProvider
 
   /**
    * Not implemented
+   *
    * @return null
    */
   @Override
@@ -70,16 +69,19 @@ public class SharedSuggestionProviderWrapper implements SharedSuggestionProvider
 
   /**
    * Not implemented
+   *
    * @param commandContext ctx
    * @return null
    */
   @Override
-  public CompletableFuture<Suggestions> customSuggestion(@NotNull CommandContext<?> commandContext) {
+  public CompletableFuture<Suggestions> customSuggestion(
+      @NotNull CommandContext<?> commandContext) {
     return null;
   }
 
   /**
    * Not implemented
+   *
    * @return null
    */
   @Override
@@ -89,6 +91,7 @@ public class SharedSuggestionProviderWrapper implements SharedSuggestionProvider
 
   /**
    * Not implemented
+   *
    * @return null
    */
   @Override
@@ -98,6 +101,7 @@ public class SharedSuggestionProviderWrapper implements SharedSuggestionProvider
 
   /**
    * Not implemented
+   *
    * @return null
    */
   @Override
@@ -107,6 +111,7 @@ public class SharedSuggestionProviderWrapper implements SharedSuggestionProvider
 
   /**
    * Not implemented
+   *
    * @return null
    */
   @Override
@@ -118,6 +123,7 @@ public class SharedSuggestionProviderWrapper implements SharedSuggestionProvider
 
   /**
    * Not implemented
+   *
    * @return null
    */
   @Override

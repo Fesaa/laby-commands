@@ -16,7 +16,7 @@ public class ServerSpecificCommands extends CommandClass<MyCustomCommandContext>
 
   @Override
   public boolean classCheck(MyCustomCommandContext ctx) {
-    return ctx.getServerData().address().getHost().equals(this.ip);
+    return ctx.getServerData() != null && ctx.getServerData().address().getHost().equals(this.ip);
   }
 
   @Command

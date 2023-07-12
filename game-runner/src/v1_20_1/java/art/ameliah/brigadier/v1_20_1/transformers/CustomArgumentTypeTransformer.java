@@ -4,7 +4,6 @@ import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
 import art.ameliah.brigadier.core.models.custumTypes.CustomSuggestion;
 import art.ameliah.brigadier.core.models.custumTypes.CustomSuggestions;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
-import art.ameliah.brigadier.core.utils.Utils;
 import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -16,9 +15,15 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import javax.inject.Singleton;
 import net.minecraft.commands.SharedSuggestionProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+@Singleton
 public class CustomArgumentTypeTransformer {
+
+  private static final Logger logger = LoggerFactory.getLogger(CustomArgumentTypeTransformer.class);
 
 
   public static <T extends CustomArgumentType<S, U>, S, U extends art.ameliah.brigadier.core.models.CommandContext> ArgumentType<S> transform(
@@ -47,9 +52,7 @@ public class CustomArgumentTypeTransformer {
         try {
           suggestions = customSuggestionsCompletableFuture.get();
         } catch (InterruptedException | ExecutionException e) {
-          System.out.println(
-              "Suggestions couldn't complete. Returning empty;" + Utils.stackTraceToString(
-                  e.getStackTrace()));
+          logger.warn("Suggestions couldn't complete. Returning empty.", e);
           return Suggestions.empty();
         }
 

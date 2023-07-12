@@ -19,8 +19,11 @@ import art.ameliah.brigadier.core.models.annotations.NoCallback;
 import art.ameliah.brigadier.core.models.annotations.Optional;
 import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
 import art.ameliah.brigadier.core.models.exceptions.CommandException;
+import art.ameliah.brigadier.core.utils.DequeCollector;
+import art.ameliah.brigadier.core.utils.Item;
 import art.ameliah.brigadier.core.utils.Utils;
 import art.ameliah.brigadier.v1_20_1.VersionedCommandService;
+import art.ameliah.brigadier.v1_20_1.wrappers.CommandItem;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -34,8 +37,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import net.labymod.api.Laby;
@@ -43,9 +48,13 @@ import net.labymod.api.client.chat.ChatExecutor;
 import net.labymod.v1_20_1.client.network.chat.VersionedTextComponent;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class CommandClassTransformer<T extends CommandClass<S>, S extends art.ameliah.brigadier.core.models.CommandContext> {
+
+  private static final Logger logger = LoggerFactory.getLogger(CommandClassTransformer.class);
 
   private final ChatExecutor chatExecutor = Laby.labyAPI().minecraft().chatExecutor();
 
@@ -59,7 +68,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     this.populateCheckMaps();
   }
 
-  static ArgumentType<?> argumentTypeFactory(Parameter parameter) throws CommandException {
+  static ArgumentType<?> argumentTypeFactory(Parameter parameter){
     Class<?> type = parameter.getType();
     if (Utils.typeIsInt(type)) {
       if (parameter.isAnnotationPresent(Bounded.class)) {
@@ -210,8 +219,8 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       }
       commandNodes.put(method.getName(), this.createLiteralArgumentBuilder(method));
     }
-    List<String> bases = new ArrayList<>();
 
+    Map<String, Item<LiteralArgumentBuilder<SharedSuggestionProvider>>> processedCommands = new HashMap<>();
     for (Method method : commandClass.getClass().getDeclaredMethods()) {
       if (!method.isAnnotationPresent(Command.class)) {
         continue;
@@ -221,21 +230,70 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         throw new CommandException("Found a non existing command? (%s)", method);
       }
 
+      Item<LiteralArgumentBuilder<SharedSuggestionProvider>> item = processedCommands.get(
+          cmd.getLiteral());
+      if (item == null) {
+        item = new CommandItem(cmd, null);
+      }
+
       String parentName = method.getAnnotation(Command.class).parent();
-      if (!parentName.equals("")) {
-        LiteralArgumentBuilder<SharedSuggestionProvider> parent = commandNodes.get(parentName);
-        if (parent == null) {
-          throw new CommandException(
-              "%s's parent %s doesn't exist or isn't annotated with @Command.", method.getName(),
-              parentName);
-        }
-        parent.then(cmd);
-      } else {
-        bases.add(method.getName());
+      if (parentName.equals("")) {
+        processedCommands.put(cmd.getLiteral(), item);
+        continue;
+      }
+
+      LiteralArgumentBuilder<SharedSuggestionProvider> parent = commandNodes.get(parentName);
+      if (parent == null) {
+        throw new CommandException(
+            "%s's parent %s doesn't exist or isn't annotated with @Command.", method.getName(),
+            parentName);
+      }
+
+      Item<LiteralArgumentBuilder<SharedSuggestionProvider>> parentItem = processedCommands.get(
+          parentName);
+      if (parentItem == null) {
+        parentItem = new CommandItem(parent, null);
+      }
+
+      item.setParent(parentItem);
+      processedCommands.put(cmd.getLiteral(), item);
+      processedCommands.putIfAbsent(parentName, parentItem);
+    }
+
+    Map<Item<LiteralArgumentBuilder<SharedSuggestionProvider>>, List<Item<LiteralArgumentBuilder<SharedSuggestionProvider>>>> parentChildMap = new HashMap<>();
+    for (Item<LiteralArgumentBuilder<SharedSuggestionProvider>> item : processedCommands.values()) {
+      parentChildMap.putIfAbsent(item, new ArrayList<>());
+      Item<LiteralArgumentBuilder<SharedSuggestionProvider>> parent = item.getParent();
+      if (parent != null) {
+        parentChildMap.computeIfAbsent(parent, k -> new ArrayList<>()).add(item);
       }
     }
 
-    return bases.stream().map(commandNodes::get).toList();
+    Deque<Item<LiteralArgumentBuilder<SharedSuggestionProvider>>> stack =
+        parentChildMap.keySet().stream()
+            .filter(item -> parentChildMap.get(item).isEmpty())
+            .collect(new DequeCollector<>());
+
+    while (!stack.isEmpty()) {
+      Item<LiteralArgumentBuilder<SharedSuggestionProvider>> currentItem = stack.pop();
+      Item<LiteralArgumentBuilder<SharedSuggestionProvider>> parent = currentItem.getParent();
+      if (parent != null) {
+        parent.updateSelf(parent.getSelf().then(currentItem.getSelf()));
+        parentChildMap.get(parent).remove(currentItem);
+        if (parentChildMap.get(parent).isEmpty()) {
+          stack.push(parent);
+        }
+      }
+
+      parentChildMap.getOrDefault(parent, new ArrayList<>()).forEach(childItem -> {
+        if (parentChildMap.get(childItem).isEmpty() && !stack.contains(childItem)) {
+          stack.push(childItem);
+        }
+      });
+    }
+
+    return parentChildMap.keySet().stream().filter(item -> !item.hasParent()).map(Item::getSelf)
+        .toList();
   }
 
   private LiteralArgumentBuilder<SharedSuggestionProvider> createLiteralArgumentBuilder(
@@ -334,29 +392,45 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     List<Method> checks = this.commandChecks.get(method.getName());
     if (checks != null) {
       for (Method check : checks) {
+        Object checkReturn;
         try {
-          Object re = check.invoke(this.commandClass, versionedCtx);
-          if (!Utils.typeIsBool(re.getClass())) {
+          checkReturn = check.invoke(this.commandClass, versionedCtx);
+        } catch (InvocationTargetException | IllegalAccessException e) {
+          logger.warn(
+              String.format("Couldn't invoke command check (%s), returning early with value 1.",
+                  check), e);
+          return 1;
+        }
+        if (!Utils.typeIsBool(checkReturn.getClass())) {
+          logger.warn(
+              String.format("Check %s did not return a boolean, returning early with value 1.",
+                  check));
+          return 1;
+        }
+        if (!(Boolean) checkReturn) {
+          Method errorComponent = this.errorMethods.get(method.getName());
+          if (errorComponent == null) {
+            this.chatExecutor.displayClientMessage(this.commandClass.noPermissionComponent());
             return 1;
           }
-          if (!(Boolean) re) {
-            Method errorComponent = this.errorMethods.get(method.getName());
-            if (errorComponent == null) {
-              this.chatExecutor.displayClientMessage(this.commandClass.noPermissionComponent());
-              return 1;
-            }
 
-            Object comp = errorComponent.invoke(this.commandClass);
-
-            if (comp.getClass().equals(VersionedTextComponent.class)) {
-              this.chatExecutor.displayClientMessage((VersionedTextComponent) comp);
-              return 1;
-            }
+          Object comp;
+          try {
+            comp = errorComponent.invoke(this.commandClass);
+          } catch (InvocationTargetException | IllegalAccessException e) {
+            logger.warn(String.format(
+                "Couldn't invoke ErrorComponent method (%s) for check (%s), returning early with value 1.",
+                errorComponent, check), e);
             return 1;
           }
-        } catch (Exception e) {
-          e.printStackTrace();
-          this.chatExecutor.displayClientMessage(this.commandClass.errorComponent());
+
+          if (comp.getClass().equals(VersionedTextComponent.class)) {
+            this.chatExecutor.displayClientMessage((VersionedTextComponent) comp);
+            return 1;
+          }
+          logger.warn(String.format(
+              "ErrorComponent method (%s) returned the wrong type (%s), returning early with value 1.",
+              errorComponent, comp.getClass()));
           return 1;
         }
       }
@@ -369,7 +443,6 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
             par -> !par.getType().equals(this.commandClass.getCommandContextClass()))
         .forEach(par -> {
           try {
-
             Object obj;
             Class<?> clazz = par.getType();
             if (VersionedCommandService.get().isCustomArgument(clazz)) {
@@ -383,16 +456,21 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
             }
             values.add(obj);
           } catch (IllegalArgumentException | InstantiationException ignored) {
+            logger.warn(
+                String.format("Could not get argument for parameter (%s), adding null.", par));
             values.add(null);
           } catch (NoSuchMethodException | InvocationTargetException |
-                   IllegalAccessException ignored) {
+                   IllegalAccessException invalidException) {
+            logger.warn(String.format(
+                "Encounter %s error this should not be possible. These should be checked in validateMethod.",
+                invalidException.getClass()));
           }
         });
     Object re;
     try {
       re = method.invoke(commandClass, values.toArray());
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("Encountered an error during command invocation", e);
       chatExecutor.displayClientMessage("Error during command execution. Checks logs.");
       return 1;
     }
@@ -410,9 +488,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           ContextTransformer.createCorrectCtx(context, parameter,
               this.commandClass.getCommandContextClass()));
     } catch (Exception e) {
-      System.out.println(
-          "Suggestions couldn't complete. Returning empty;" + Utils.stackTraceToString(
-              e.getStackTrace()));
+      logger.warn("Suggestions couldn't complete. Returning empty.", e);
       return Suggestions.empty();
     }
 
@@ -422,6 +498,49 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       builder.suggest(s);
     }
     return builder.buildFuture();
+  }
+
+  private static class CommandLink {
+
+    private final String name;
+    private final String parent;
+    private final List<String> children = new ArrayList<>();
+    private LiteralArgumentBuilder<SharedSuggestionProvider> command;
+
+    public CommandLink(String name, LiteralArgumentBuilder<SharedSuggestionProvider> command,
+        String parent) {
+      this.name = name;
+      this.command = command;
+      this.parent = parent;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public LiteralArgumentBuilder<SharedSuggestionProvider> getCommand() {
+      return command;
+    }
+
+    public void setCommand(LiteralArgumentBuilder<SharedSuggestionProvider> command) {
+      this.command = command;
+    }
+
+    public boolean hasParent() {
+      return parent != null;
+    }
+
+    public String getParent() {
+      return parent;
+    }
+
+    public List<String> getChildren() {
+      return children;
+    }
+
+    public void addChild(String child) {
+      this.children.add(child);
+    }
   }
 
 }
