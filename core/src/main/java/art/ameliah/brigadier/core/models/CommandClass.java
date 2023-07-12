@@ -21,4 +21,8 @@ public abstract class CommandClass<T extends CommandContext> {
   public boolean classCheck(T ctx) {
     return true;
   }
+
+  public boolean shouldRegister(T ctx) {
+    return true;
+  }
 }

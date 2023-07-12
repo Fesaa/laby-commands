@@ -200,11 +200,11 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     }
   }
 
-  public @NotNull List<McCommand> getCommands()
+  public @NotNull List<McCommand<S>> getCommands()
       throws CommandException {
     Objects.requireNonNull(commandClass, "commandClass");
 
-    HashMap<String, McCommand> commandNodes = new HashMap<>();
+    HashMap<String, McCommand<S>> commandNodes = new HashMap<>();
 
     for (Method method : commandClass.getClass().getDeclaredMethods()) {
       if (!method.isAnnotationPresent(Command.class)) {
@@ -219,18 +219,17 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       commandNodes.put(method.getName(), this.createLiteralArgumentBuilder(method));
     }
 
-    Map<String, Item<McCommand>> processedCommands = new HashMap<>();
+    Map<String, Item<McCommand<S>>> processedCommands = new HashMap<>();
     for (Method method : commandClass.getClass().getDeclaredMethods()) {
       if (!method.isAnnotationPresent(Command.class)) {
         continue;
       }
-      McCommand cmd = commandNodes.get(method.getName());
+      McCommand<S> cmd = commandNodes.get(method.getName());
       if (cmd == null) {
         throw new CommandException("Found a non existing command? (%s)", method);
       }
 
-      Item<McCommand> item = processedCommands.get(
-          cmd.getLiteral());
+      Item<McCommand<S>> item = processedCommands.get(cmd.getLiteral());
       if (item == null) {
         item = new Item<>(cmd, null);
       }
@@ -241,15 +240,14 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         continue;
       }
 
-      McCommand parent = commandNodes.get(parentName);
+      McCommand<S> parent = commandNodes.get(parentName);
       if (parent == null) {
         throw new CommandException(
             "%s's parent %s doesn't exist or isn't annotated with @Command.", method.getName(),
             parentName);
       }
 
-      Item<McCommand> parentItem = processedCommands.get(
-          parentName);
+      Item<McCommand<S>> parentItem = processedCommands.get(parentName);
       if (parentItem == null) {
         parentItem = new Item<>(parent, null);
       }
@@ -259,23 +257,23 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       processedCommands.putIfAbsent(parentName, parentItem);
     }
 
-    Map<Item<McCommand>, List<Item<McCommand>>> parentChildMap = new HashMap<>();
-    for (Item<McCommand> item : processedCommands.values()) {
+    Map<Item<McCommand<S>>, List<Item<McCommand<S>>>> parentChildMap = new HashMap<>();
+    for (Item<McCommand<S>> item : processedCommands.values()) {
       parentChildMap.putIfAbsent(item, new ArrayList<>());
-      Item<McCommand> parent = item.getParent();
+      Item<McCommand<S>> parent = item.getParent();
       if (parent != null) {
         parentChildMap.computeIfAbsent(parent, k -> new ArrayList<>()).add(item);
       }
     }
 
-    Deque<Item<McCommand>> stack =
+    Deque<Item<McCommand<S>>> stack =
         parentChildMap.keySet().stream()
             .filter(item -> parentChildMap.get(item).isEmpty())
             .collect(new DequeCollector<>());
 
     while (!stack.isEmpty()) {
-      Item<McCommand> currentItem = stack.pop();
-      Item<McCommand> parent = currentItem.getParent();
+      Item<McCommand<S>> currentItem = stack.pop();
+      Item<McCommand<S>> parent = currentItem.getParent();
       if (parent != null) {
         parent.updateSelf(parent.getSelf().then(currentItem.getSelf()));
         parentChildMap.get(parent).remove(currentItem);
@@ -298,11 +296,12 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         .toList();
   }
 
-  private McCommand createLiteralArgumentBuilder(
+  private McCommand<S> createLiteralArgumentBuilder(
       @NotNull Method method) throws CommandException {
     this.validateMethod(method);
 
-    McCommand cmd = McCommand.literal(method.getName());
+    McCommand<S> cmd = McCommand.literal(method.getName(), this.commandClass::shouldRegister,
+        commandClass);
     HashMap<String, Method> autoCompleteMap = new HashMap<>();
 
     if (method.isAnnotationPresent(AutoComplete.class) || method.isAnnotationPresent(

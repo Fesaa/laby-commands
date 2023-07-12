@@ -3,18 +3,21 @@ package art.ameliah.brigadier.v1_20_1;
 import art.ameliah.brigadier.core.models.CommandSource;
 import java.lang.reflect.Parameter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Stream;
 import net.labymod.api.client.resources.ResourceLocation;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class VersionedCommandSource extends CommandSource {
 
+  @Nullable
   private final com.mojang.brigadier.context.CommandContext<SharedSuggestionProvider> ctx;
   private final Parameter parameter;
 
   public VersionedCommandSource(
-      com.mojang.brigadier.context.CommandContext<SharedSuggestionProvider> ctx,
+      com.mojang.brigadier.context.@Nullable CommandContext<SharedSuggestionProvider> ctx,
       Parameter parameter) {
     this.ctx = ctx;
     this.parameter = parameter;
@@ -22,6 +25,9 @@ public class VersionedCommandSource extends CommandSource {
 
   @Override
   public <V> V getArgument(String name, Class<V> clazz) throws IllegalArgumentException {
+    if (this.ctx == null) {
+      throw new IllegalArgumentException("Null source, cannot provide arguments");
+    }
     return this.ctx.getArgument(name, clazz);
   }
 
@@ -41,22 +47,31 @@ public class VersionedCommandSource extends CommandSource {
 
   @Override
   public String getInput() {
-    return this.ctx.getInput();
+    return this.ctx == null ? "" : this.ctx.getInput();
   }
 
   @Override
   public @NotNull Stream<ResourceLocation> getAvailableSounds() {
+    if (this.ctx == null) {
+      return Stream.empty();
+    }
     return this.ctx.getSource().getAvailableSounds()
         .map(loc -> ResourceLocation.create(loc.getNamespace(), loc.getPath()));
   }
 
   @Override
   public @NotNull Collection<String> getAllTeams() {
+    if (this.ctx == null) {
+      return Collections.emptyList();
+    }
     return this.ctx.getSource().getAllTeams();
   }
 
   @Override
   public @NotNull Collection<String> getOnlinePlayerNames() {
+    if (this.ctx == null) {
+      return Collections.emptyList();
+    }
     return this.ctx.getSource().getOnlinePlayerNames();
   }
 }

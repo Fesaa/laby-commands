@@ -12,11 +12,11 @@ import org.jetbrains.annotations.Nullable;
 public class ContextTransformer {
 
   public static <S extends art.ameliah.brigadier.core.models.CommandContext> @Nullable S createCorrectCtx(
-      CommandContext<SharedSuggestionProvider> ctx, Parameter parameter, Class<S> commandClass) {
+      CommandContext<SharedSuggestionProvider> ctx, Parameter parameter, Class<S> commandContext) {
     VersionedCommandSource versionedCtxSource = new VersionedCommandSource(ctx, parameter);
     Constructor<?> ctxConstructor;
     try {
-      ctxConstructor = commandClass.getConstructor(CommandSource.class);
+      ctxConstructor = commandContext.getConstructor(CommandSource.class);
     } catch (NoSuchMethodException ignored) {
       return null;
     }
