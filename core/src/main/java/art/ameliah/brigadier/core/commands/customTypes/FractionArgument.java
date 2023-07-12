@@ -1,12 +1,11 @@
 package art.ameliah.brigadier.core.commands.customTypes;
 
-import art.ameliah.brigadier.core.models.CommandContext;
 import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
 import java.util.Collection;
 import java.util.List;
 
-public class FractionArgument implements CustomArgumentType<Float, CommandContext> {
+public class FractionArgument implements CustomArgumentType<Float, MyCustomCommandContext> {
 
   @Override
   public Collection<String> getExamples() {
@@ -43,8 +42,8 @@ public class FractionArgument implements CustomArgumentType<Float, CommandContex
   }
 
   @Override
-  public Class<CommandContext> getCommandContextClass() {
-    return CommandContext.class;
+  public Class<MyCustomCommandContext> getCommandContextClass() {
+    return MyCustomCommandContext.class;
   }
 
   @Override

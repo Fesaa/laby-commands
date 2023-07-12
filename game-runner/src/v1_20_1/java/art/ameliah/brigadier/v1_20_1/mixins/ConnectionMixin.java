@@ -24,14 +24,17 @@ public class ConnectionMixin {
       ServerboundChatCommandPacket packet = (ServerboundChatCommandPacket) $$0;
       String[] parts = packet.command().split(" ");
       if (parts.length > 0 && VersionedCommandService.get().isCustomCommand(parts[0])) {
+        int result = 1;
         try {
-          VersionedCommandService.get().dispatcher.execute(packet.command(),
+          result = VersionedCommandService.get().dispatcher.execute(packet.command(),
               new SharedSuggestionProviderWrapper());
         } catch (CommandSyntaxException e) {
           Minecraft.getInstance().gui.getChat().addMessage(
               Component.literal(e.getMessage()).withStyle(ChatFormatting.RED));
         }
-        ci.cancel();
+        if (result == 1) {
+          ci.cancel();
+        }
       }
     }
 

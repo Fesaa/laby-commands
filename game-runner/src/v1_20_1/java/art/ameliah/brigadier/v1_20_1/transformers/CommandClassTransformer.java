@@ -161,7 +161,6 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           try {
             Method checkMethod = this.commandClass.getClass()
                 .getMethod(check.method(), this.commandClass.getCommandContextClass());
-            Arrays.stream(this.commandClass.getClass().getMethods()).forEach(System.out::println);
             if (!checkMethod.canAccess(this.commandClass)) {
               throw new CommandException("CheckMethod method (%s) must be public for %s.",
                   check.method(), method.getName());
@@ -338,7 +337,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         try {
           Object re = check.invoke(this.commandClass, versionedCtx);
           if (!Utils.typeIsBool(re.getClass())) {
-            return 0;
+            return 1;
           }
           if (!(Boolean) re) {
             Method errorComponent = this.errorMethods.get(method.getName());
@@ -353,7 +352,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
               this.chatExecutor.displayClientMessage((VersionedTextComponent) comp);
               return 1;
             }
-            return 0;
+            return 1;
           }
         } catch (Exception e) {
           e.printStackTrace();
