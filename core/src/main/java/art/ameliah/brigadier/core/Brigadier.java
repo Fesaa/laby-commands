@@ -36,7 +36,7 @@ public class Brigadier extends LabyAddon<BrigadierConfig> {
     DefaultReferenceStorage storage = this.referenceStorageAccessor();
     commandService = storage.getCommandService();
     if (commandService == null) {
-      commandService = new DefaultCommandService();
+      commandService = new DefaultCommandService<>();
     }
 
     commandService.registerCustomArgumentType(Fraction.class, new FractionArgument());

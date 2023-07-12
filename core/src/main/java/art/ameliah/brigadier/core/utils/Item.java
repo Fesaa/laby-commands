@@ -13,22 +13,22 @@ public class Item<T> {
 
   public boolean hasParent() {
     return this.parent == null;
-  };
+  }
 
   public Item<T> getParent() {
     return parent;
-  };
+  }
 
   public void setParent(Item<T> parent) {
     this.parent = parent;
-  };
+  }
 
   public void updateSelf(T self) {
     this.self = self;
-  };
+  }
 
   public T getSelf() {
     return self;
-  };
+  }
 
 }

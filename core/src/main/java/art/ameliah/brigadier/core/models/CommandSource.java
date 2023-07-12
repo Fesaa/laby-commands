@@ -2,17 +2,13 @@ package art.ameliah.brigadier.core.models;
 
 import java.util.Collection;
 import java.util.stream.Stream;
-import net.labymod.api.Laby;
-import net.labymod.api.LabyAPI;
 import net.labymod.api.client.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * First argument in Command callbacks and AutoComplete callbacks
+ * Wrapper around the Mojang provided source
  */
 public abstract class CommandSource {
-
-  protected final LabyAPI labyAPI = Laby.labyAPI();
 
   /**
    * @param name  Name of the argument

@@ -6,10 +6,17 @@ import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import net.labymod.api.addon.LabyAddon;
 import net.labymod.api.reference.annotation.Referenceable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Service used to register your {@link CommandClass}'s. Obtain with
+ * {@link LabyAddon#referenceStorageAccessor()}
+ *
+ * @param <T> Your used {@link CommandContext}
+ */
 @Nullable
 @Referenceable
 public abstract class CommandService<T extends CommandContext> {
@@ -29,7 +36,7 @@ public abstract class CommandService<T extends CommandContext> {
   }
 
   /**
-   * **Must** be registered before commands are
+   * <b>Must</b> be registered before {@link CommandClass}'s are
    *
    * @param clazz              Class of the argument to convert for
    * @param customArgumentType Converter for the argument
@@ -39,12 +46,15 @@ public abstract class CommandService<T extends CommandContext> {
     this.customArguments.put(clazz, customArgumentType);
   }
 
+  /**
+   * @return Whether the registration was successful
+   */
   public abstract boolean registerCommand(@NotNull CommandClass<T> commandClass);
 
   public abstract boolean isCustomCommand(String root);
 
   /**
-   * Will only go in effect on the next world join.
+   * Will only go in effect on the next server join.
    */
   public abstract boolean removeCommand(@NotNull CommandClass<T> commandClass);
 

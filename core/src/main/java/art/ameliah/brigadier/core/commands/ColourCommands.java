@@ -41,7 +41,7 @@ public class ColourCommands extends CommandClass<MyCustomCommandContext> {
   }
 
   @Command(parent = "colour")
-  @Check(method = "highEnough", errorMethod = "notHighEnough")
+  @Check(method = "highEnough", failedMethod = "notHighEnough")
   public boolean trans(MyCustomCommandContext ctx, @Greedy String text) {
     ctx.displayClientMessage(Utils.mixer(text, this.transColour));
     return true;

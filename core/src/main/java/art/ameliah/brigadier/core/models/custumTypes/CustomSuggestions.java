@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Wrapper around the Mojang Suggestions
+ */
 public class CustomSuggestions {
 
   private static final CustomSuggestions EMPTY = new CustomSuggestions(new ArrayList<>());

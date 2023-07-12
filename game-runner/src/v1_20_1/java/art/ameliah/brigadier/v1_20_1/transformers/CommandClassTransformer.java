@@ -179,7 +179,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
                 check.method(), method.getName());
           }
 
-          String errorMethodName = check.errorMethod();
+          String errorMethodName = check.failedMethod();
           if (!errorMethodName.equals("noPermissionComponent")) {
             try {
               Method errorMethod = this.commandClass.getClass().getMethod(errorMethodName);

@@ -1,5 +1,7 @@
 package art.ameliah.brigadier.core.models;
 
+import art.ameliah.brigadier.core.models.annotations.Check;
+import art.ameliah.brigadier.core.models.annotations.Command;
 import net.labymod.api.Laby;
 import net.labymod.api.LabyAPI;
 import net.labymod.api.client.component.Component;
@@ -8,22 +10,23 @@ import net.labymod.api.client.network.server.ServerData;
 import net.labymod.api.util.math.vector.FloatVector3;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Context passed through all {@link Command}'s and {@link Check}'s. Can be extended
+ */
 public class CommandContext {
 
-  private final CommandSource source;
+  private final @Nullable CommandSource source;
   private final LabyAPI labyAPI = Laby.labyAPI();
 
-  public CommandContext(CommandSource source) {
+  public CommandContext(@Nullable CommandSource source) {
     this.source = source;
   }
 
-  public CommandSource getSource() {
+  public @Nullable CommandSource getSource() {
     return this.source;
   }
 
-  ;
-
-  public ServerData getServerData() {
+  public @Nullable ServerData getServerData() {
     return this.labyAPI.serverController().getCurrentServerData();
   }
 

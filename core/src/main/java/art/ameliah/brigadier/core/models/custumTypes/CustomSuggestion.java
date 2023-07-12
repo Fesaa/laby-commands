@@ -1,5 +1,8 @@
 package art.ameliah.brigadier.core.models.custumTypes;
 
+/**
+ * Wrapper around the Mojang suggestion
+ */
 public class CustomSuggestion {
 
   private final String text;
