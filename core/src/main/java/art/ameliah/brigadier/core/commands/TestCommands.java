@@ -8,6 +8,7 @@ import art.ameliah.brigadier.core.models.annotations.Bounded;
 import art.ameliah.brigadier.core.models.annotations.Check;
 import art.ameliah.brigadier.core.models.annotations.Command;
 import art.ameliah.brigadier.core.models.annotations.Greedy;
+import art.ameliah.brigadier.core.models.annotations.Named;
 import art.ameliah.brigadier.core.models.annotations.Optional;
 import java.util.List;
 import net.labymod.api.client.component.Component;
@@ -47,7 +48,9 @@ public class TestCommands extends CommandClass<MyCustomCommandContext> {
   }
 
   @Command
-  @AutoComplete(method = "autocompleteName", parameterName = "arg2")
+  @Named(argument = "arg1", name = "age")
+  @Named(argument = "arg2", name = "name")
+  @AutoComplete(method = "autocompleteName", parameterName = "name")
   @AutoComplete(method = "autocompleteOther", parameterName = "arg3")
   public boolean numbers(MyCustomCommandContext ctx, @Bounded(max_int = 10) Integer i, String name,
       String other, Boolean b, @Optional @Greedy String theRest) {

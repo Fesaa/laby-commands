@@ -15,6 +15,7 @@ import art.ameliah.brigadier.core.models.annotations.Check;
 import art.ameliah.brigadier.core.models.annotations.CheckContainer;
 import art.ameliah.brigadier.core.models.annotations.Command;
 import art.ameliah.brigadier.core.models.annotations.Greedy;
+import art.ameliah.brigadier.core.models.annotations.Named;
 import art.ameliah.brigadier.core.models.annotations.NoCallback;
 import art.ameliah.brigadier.core.models.annotations.Optional;
 import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
@@ -42,6 +43,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import net.labymod.api.Laby;
 import net.labymod.api.client.chat.ChatExecutor;
 import net.labymod.v1_20_1.client.network.chat.VersionedTextComponent;
@@ -64,7 +67,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
 
   public CommandClassTransformer(T commandClass) throws CommandException {
     this.commandClass = commandClass;
-    this.populateCheckMaps();
+    populateCheckMaps();
   }
 
   static ArgumentType<?> argumentTypeFactory(Parameter parameter) {
@@ -120,11 +123,11 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       Parameter parameter = parameters[i];
 
       if (i == 0 && !parameter.getType()
-          .equals(this.commandClass.getCommandContextClass())) {
+          .equals(commandClass.getCommandContextClass())) {
         throw new CommandException("First argument must be CommandContext. (%s)", method);
       }
 
-      if (parameter.getType().equals(this.commandClass.getCommandContextClass())
+      if (parameter.getType().equals(commandClass.getCommandContextClass())
           && i != 0) {
         throw new CommandException("CommandContext can only be used as the first argument. (%s)",
             method);
@@ -157,7 +160,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
   }
 
   public void populateCheckMaps() throws CommandException {
-    for (Method method : this.commandClass.getClass().getMethods()) {
+    for (Method method : commandClass.getClass().getMethods()) {
       if (!method.isAnnotationPresent(Command.class)) {
         continue;
       }
@@ -167,9 +170,9 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         List<Method> checks = new ArrayList<>();
         for (Check check : method.getAnnotationsByType(Check.class)) {
           try {
-            Method checkMethod = this.commandClass.getClass()
-                .getMethod(check.method(), this.commandClass.getCommandContextClass());
-            if (!checkMethod.canAccess(this.commandClass)) {
+            Method checkMethod = commandClass.getClass()
+                .getMethod(check.method(), commandClass.getCommandContextClass());
+            if (!checkMethod.canAccess(commandClass)) {
               throw new CommandException("CheckMethod method (%s) must be public for %s.",
                   check.method(), method.getName());
             }
@@ -182,12 +185,12 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           String errorMethodName = check.failedMethod();
           if (!errorMethodName.equals("noPermissionComponent")) {
             try {
-              Method errorMethod = this.commandClass.getClass().getMethod(errorMethodName);
-              if (!errorMethod.canAccess(this.commandClass)) {
+              Method errorMethod = commandClass.getClass().getMethod(errorMethodName);
+              if (!errorMethod.canAccess(commandClass)) {
                 throw new CommandException("ErrorMethod method (%s) must be public for %s.",
                     check.method(), method.getName());
               }
-              this.errorMethods.put(method.getName(), errorMethod);
+              errorMethods.put(method.getName(), errorMethod);
             } catch (NoSuchMethodException e) {
               throw new CommandException("ErrorMethod method (%s) does not exists for %s.",
                   check.method(), method.getName());
@@ -195,7 +198,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           }
 
         }
-        this.commandChecks.put(method.getName(), checks);
+        commandChecks.put(method.getName(), checks);
       }
     }
   }
@@ -216,7 +219,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       if (!(method.canAccess(commandClass))) {
         throw new CommandException("Method must be public. (%s)", method);
       }
-      commandNodes.put(method.getName(), this.createLiteralArgumentBuilder(method));
+      commandNodes.put(method.getName(), createLiteralArgumentBuilder(method));
     }
 
     Map<String, Item<McCommand<S>>> processedCommands = new HashMap<>();
@@ -298,9 +301,9 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
 
   private McCommand<S> createLiteralArgumentBuilder(
       @NotNull Method method) throws CommandException {
-    this.validateMethod(method);
+    validateMethod(method);
 
-    McCommand<S> cmd = McCommand.literal(method.getName(), this.commandClass::shouldRegister,
+    McCommand<S> cmd = McCommand.literal(method.getName(), commandClass::shouldRegister,
         commandClass);
     HashMap<String, Method> autoCompleteMap = new HashMap<>();
 
@@ -308,9 +311,9 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         AutoCompleteContainer.class)) {
       for (AutoComplete autoComplete : method.getAnnotationsByType(AutoComplete.class)) {
         try {
-          Method autoCompleteFunc = this.commandClass.getClass().getMethod(autoComplete.method(),
-              this.commandClass.getCommandContextClass());
-          if (!autoCompleteFunc.canAccess(this.commandClass)) {
+          Method autoCompleteFunc = commandClass.getClass().getMethod(autoComplete.method(),
+              commandClass.getCommandContextClass());
+          if (!autoCompleteFunc.canAccess(commandClass)) {
             throw new CommandException("Autocomplete method (%s) must be public for %s.",
                 autoComplete.method(), method.getName());
           }
@@ -321,6 +324,12 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         }
       }
     }
+
+    Map<String, String> renamedArgs =
+        Arrays.stream(method.getAnnotationsByType(Named.class))
+            .collect(Collectors.toMap(Named::argument, Named::name));
+
+    Function<String, String> renamer = (s) -> renamedArgs.getOrDefault(s, s);
 
     Parameter[] parameters = method.getParameters();
     int size = parameters.length;
@@ -334,25 +343,25 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     if (size > 1) {
       for (int i = size - 1; i >= 1; i--) {
         parameter = parameters[i];
+        String parameterName = renamer.apply(parameter.getName());
         argumentType = argumentTypeFactory(parameter);
         if (argumentType == null) {
           throw new CommandException("Unsupported type for argument (%s) with type %s",
               parameter.getName(), parameter.getType());
         }
 
-        RequiredArgumentBuilder<SharedSuggestionProvider, ?> requiredArgumentBuilder = RequiredArgumentBuilder.argument(
-            parameter.getName(), argumentType);
+        RequiredArgumentBuilder<SharedSuggestionProvider, ?> requiredArgumentBuilder =
+            RequiredArgumentBuilder.argument(parameterName, argumentType);
 
-        Method func = autoCompleteMap.get(parameter.getName());
+        Method func = autoCompleteMap.get(parameterName);
         if (func != null) {
           Parameter finalParameter = parameter;
-          requiredArgumentBuilder.suggests(
-              (context, builder) -> this.getSuggestionsCompletableFuture(context, builder,
-                  finalParameter, func));
+          requiredArgumentBuilder.suggests((context, builder) ->
+              getSuggestionsCompletableFuture(context, builder, finalParameter, func));
         }
 
         if (canExec) {
-          requiredArgumentBuilder.executes(ctx -> commandEval(method, ctx));
+          requiredArgumentBuilder.executes(ctx -> commandEval(method, ctx, renamer));
         }
 
         tail = tail == null
@@ -375,26 +384,27 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         : cmd.then(tail);
 
     if (canExec) {
-      cmd.executes(ctx -> commandEval(method, ctx));
+      cmd.executes(ctx -> commandEval(method, ctx, renamer));
     }
     return cmd;
   }
 
-  private int commandEval(Method method, CommandContext<SharedSuggestionProvider> ctx) {
+  private int commandEval(Method method, CommandContext<SharedSuggestionProvider> ctx,
+      Function<String, String> renamer) {
     S versionedCtx = ContextTransformer.createCorrectCtx(ctx, null,
-        this.commandClass.getCommandContextClass());
+        commandClass.getCommandContextClass());
 
-    if (!this.commandClass.classCheck(versionedCtx)) {
-      this.chatExecutor.displayClientMessage(this.commandClass.noPermissionComponent());
+    if (!commandClass.classCheck(versionedCtx)) {
+      chatExecutor.displayClientMessage(commandClass.noPermissionComponent());
       return 1;
     }
 
-    List<Method> checks = this.commandChecks.get(method.getName());
+    List<Method> checks = commandChecks.get(method.getName());
     if (checks != null) {
       for (Method check : checks) {
         Object checkReturn;
         try {
-          checkReturn = check.invoke(this.commandClass, versionedCtx);
+          checkReturn = check.invoke(commandClass, versionedCtx);
         } catch (InvocationTargetException | IllegalAccessException e) {
           logger.warn(
               String.format("Couldn't invoke command check (%s), returning early with value 1.",
@@ -408,15 +418,15 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           return 1;
         }
         if (!(Boolean) checkReturn) {
-          Method errorComponent = this.errorMethods.get(method.getName());
+          Method errorComponent = errorMethods.get(method.getName());
           if (errorComponent == null) {
-            this.chatExecutor.displayClientMessage(this.commandClass.noPermissionComponent());
+            chatExecutor.displayClientMessage(commandClass.noPermissionComponent());
             return 1;
           }
 
           Object comp;
           try {
-            comp = errorComponent.invoke(this.commandClass);
+            comp = errorComponent.invoke(commandClass);
           } catch (InvocationTargetException | IllegalAccessException e) {
             logger.warn(String.format(
                 "Couldn't invoke ErrorComponent method (%s) for check (%s), returning early with value 1.",
@@ -425,7 +435,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           }
 
           if (comp.getClass().equals(VersionedTextComponent.class)) {
-            this.chatExecutor.displayClientMessage((VersionedTextComponent) comp);
+            chatExecutor.displayClientMessage((VersionedTextComponent) comp);
             return 1;
           }
           logger.warn(String.format(
@@ -439,9 +449,9 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     List<Object> values = new ArrayList<>();
     values.add(versionedCtx);
     Arrays.stream(method.getParameters())
-        .filter(
-            par -> !par.getType().equals(this.commandClass.getCommandContextClass()))
+        .filter(par -> !par.getType().equals(commandClass.getCommandContextClass()))
         .forEach(par -> {
+          String name = renamer.apply(par.getName());
           try {
             Object obj;
             Class<?> clazz = par.getType();
@@ -449,10 +459,11 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
               Method classGetter = clazz.getMethod("getClassType");
               Object returnValue = classGetter.invoke(clazz);
               Class<?> returnClass = (Class<?>) returnValue;
+
               Constructor<?> constructor = clazz.getConstructor(returnClass);
-              obj = constructor.newInstance(ctx.getArgument(par.getName(), returnClass));
+              obj = constructor.newInstance(ctx.getArgument(name, returnClass));
             } else {
-              obj = ctx.getArgument(par.getName(), par.getType());
+              obj = ctx.getArgument(name, par.getType());
             }
             values.add(obj);
           } catch (IllegalArgumentException | InstantiationException ignored) {
@@ -484,9 +495,9 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     Object result;
 
     try {
-      result = func.invoke(this.commandClass,
+      result = func.invoke(commandClass,
           ContextTransformer.createCorrectCtx(context, parameter,
-              this.commandClass.getCommandContextClass()));
+              commandClass.getCommandContextClass()));
     } catch (Exception e) {
       logger.warn("Suggestions couldn't complete. Returning empty.", e);
       return Suggestions.empty();
