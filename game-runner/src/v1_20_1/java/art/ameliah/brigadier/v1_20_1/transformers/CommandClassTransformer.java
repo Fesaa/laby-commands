@@ -466,13 +466,15 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
               obj = ctx.getArgument(name, par.getType());
             }
             values.add(obj);
-          } catch (IllegalArgumentException | InstantiationException ignored) {
+          } catch (IllegalArgumentException | InstantiationException e) {
             logger.warn(
-                String.format("Could not get argument for parameter (%s), adding null.", par));
+                String.format(
+                    "Could not get argument for parameter (%s) because (%s), adding null.", par,
+                    e));
             values.add(null);
           } catch (NoSuchMethodException | InvocationTargetException |
                    IllegalAccessException invalidException) {
-            logger.warn(String.format(
+            logger.error(String.format(
                 "Encounter %s error this should not be possible. These should be checked in validateMethod.",
                 invalidException.getClass()));
           }

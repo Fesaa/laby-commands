@@ -1,6 +1,7 @@
 package art.ameliah.brigadier.core.commands.customTypes;
 
 import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
+import art.ameliah.brigadier.core.models.custumTypes.StringReaderWrapper;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
 import java.util.Collection;
 import java.util.List;
@@ -13,10 +14,15 @@ public class FractionArgument implements CustomArgumentType<Float, MyCustomComma
   }
 
   @Override
-  public Float parse(String string) throws SyntaxException {
+  public Float parse(StringReaderWrapper reader) throws SyntaxException {
     StringBuilder numeratorString = new StringBuilder();
     StringBuilder denominatorString = new StringBuilder();
     boolean passedSlash = false;
+    int start = reader.getCursor();
+    while (reader.canRead() && this.stringCollector(reader.peek())) {
+      reader.skip();
+    }
+    String string = reader.getString().substring(start, reader.getCursor());
 
     for (int i = 0; i < string.length(); i++) {
       String c = String.valueOf(string.charAt(i));

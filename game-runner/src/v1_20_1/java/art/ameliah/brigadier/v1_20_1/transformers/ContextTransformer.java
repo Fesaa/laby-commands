@@ -14,6 +14,20 @@ public class ContextTransformer {
   public static <S extends art.ameliah.brigadier.core.models.CommandContext> @Nullable S createCorrectCtx(
       CommandContext<SharedSuggestionProvider> ctx, Parameter parameter, Class<S> commandContext) {
     VersionedCommandSource versionedCtxSource = new VersionedCommandSource(ctx, parameter);
+    return create(commandContext, versionedCtxSource);
+  }
+
+  public static <S extends art.ameliah.brigadier.core.models.CommandContext> @Nullable S createCorrectCtx(
+      CommandContext<SharedSuggestionProvider> ctx, Parameter parameter, Class<S> commandContext,
+      String remaining) {
+    VersionedCommandSource versionedCtxSource = new VersionedCommandSource(ctx, parameter,
+        remaining);
+    return create(commandContext, versionedCtxSource);
+  }
+
+  private static <S extends art.ameliah.brigadier.core.models.CommandContext> @Nullable S create(
+      Class<S> commandContext, VersionedCommandSource versionedCtxSource
+  ) {
     Constructor<?> ctxConstructor;
     try {
       ctxConstructor = commandContext.getConstructor(CommandSource.class);

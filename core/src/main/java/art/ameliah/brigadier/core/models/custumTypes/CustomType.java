@@ -8,13 +8,27 @@ import org.jetbrains.annotations.Nullable;
  *
  * @param <T> The wrapped type
  */
-public interface CustomType<T> {
+public abstract class CustomType<T> {
 
-  static Class<?> getClassType() {
+  protected final T value;
+
+  public CustomType() {
+    this.value = null;
+  }
+
+  public CustomType(T value) {
+    this.value = value;
+  }
+
+  public static Class<?> getClassType() {
     return null;
   }
 
-  @Nullable T get();
+  public @Nullable T get() {
+    return value;
+  }
+
+  ;
 
 
 }

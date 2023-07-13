@@ -3,9 +3,15 @@ package art.ameliah.brigadier.core.service;
 import art.ameliah.brigadier.core.models.CommandClass;
 import art.ameliah.brigadier.core.models.CommandContext;
 import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
+import art.ameliah.brigadier.core.models.defaultCustomTypes.player.PlayerType;
+import art.ameliah.brigadier.core.models.defaultCustomTypes.player.PlayerArgumentType;
+import art.ameliah.brigadier.core.models.defaultCustomTypes.pos.PositionType;
+import art.ameliah.brigadier.core.models.defaultCustomTypes.pos.PositionArgumentType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import art.ameliah.brigadier.core.models.defaultCustomTypes.uuid.UUIDArgumentType;
+import art.ameliah.brigadier.core.models.defaultCustomTypes.uuid.UUIDType;
 import net.labymod.api.addon.LabyAddon;
 import net.labymod.api.reference.annotation.Referenceable;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +31,9 @@ public abstract class CommandService<T extends CommandContext> {
   protected final HashMap<Class<?>, CustomArgumentType<?, ?>> customArguments = new HashMap<>();
 
   public CommandService() {
+    this.registerCustomArgumentType(PlayerType.class, new PlayerArgumentType());
+    this.registerCustomArgumentType(PositionType.class, new PositionArgumentType());
+    this.registerCustomArgumentType(UUIDType.class, new UUIDArgumentType());
   }
 
   public CustomArgumentType<?, ?> getCustomArgument(Class<?> clazz) {

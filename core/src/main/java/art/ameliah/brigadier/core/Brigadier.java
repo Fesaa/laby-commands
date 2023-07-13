@@ -3,6 +3,7 @@ package art.ameliah.brigadier.core;
 import art.ameliah.brigadier.core.commands.ColourCommands;
 import art.ameliah.brigadier.core.commands.ComplicatedBranching;
 import art.ameliah.brigadier.core.commands.CustomCommandContextCommands;
+import art.ameliah.brigadier.core.commands.DefaultCustomTypes;
 import art.ameliah.brigadier.core.commands.ServerSpecificCommands;
 import art.ameliah.brigadier.core.commands.TestCommands;
 import art.ameliah.brigadier.core.commands.customTypes.Fraction;
@@ -46,6 +47,7 @@ public class Brigadier extends LabyAddon<BrigadierConfig> {
     commandService.registerCommand(new ComplicatedBranching());
     commandService.registerCommand(new ServerSpecificCommands("play.cubecraft.net"));
     commandService.registerCommand(new CustomCommandContextCommands());
+    commandService.registerCommand(new DefaultCustomTypes());
 
     this.logger().info("Enabled the Addon");
   }

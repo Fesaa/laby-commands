@@ -3,6 +3,8 @@ package art.ameliah.brigadier.v1_20_1.transformers;
 import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
 import art.ameliah.brigadier.core.models.custumTypes.CustomSuggestion;
 import art.ameliah.brigadier.core.models.custumTypes.CustomSuggestions;
+import art.ameliah.brigadier.core.models.custumTypes.StringReaderWrapper;
+import art.ameliah.brigadier.core.models.exceptions.CommandException;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
 import com.mojang.brigadier.LiteralMessage;
 import com.mojang.brigadier.StringReader;
@@ -44,7 +46,7 @@ public class CustomArgumentTypeTransformer {
 
         CommandContext<SharedSuggestionProvider> ctx = (CommandContext<SharedSuggestionProvider>) context;
         U versionedCtx = ContextTransformer.createCorrectCtx(ctx, null,
-            customArgumentType.getCommandContextClass());
+            customArgumentType.getCommandContextClass(), builder.getRemaining());
         CompletableFuture<CustomSuggestions> customSuggestionsCompletableFuture = customArgumentType.listSuggestions(
             versionedCtx);
 
@@ -66,12 +68,12 @@ public class CustomArgumentTypeTransformer {
       @Override
       public S parse(StringReader reader) throws CommandSyntaxException {
         try {
-          int start = reader.getCursor();
-          while (reader.canRead() && customArgumentType.stringCollector(reader.peek())) {
-            reader.skip();
-          }
-          return customArgumentType.parse(reader.getString().substring(start, reader.getCursor()));
-        } catch (SyntaxException e) {
+          StringReaderWrapper readerWrapper = new StringReaderWrapper(reader.getString(),
+              reader.getCursor());
+          S parse = customArgumentType.parse(readerWrapper);
+          reader.setCursor(readerWrapper.getCursor());
+          return parse;
+        } catch (SyntaxException | CommandException e) {
           throw new SimpleCommandExceptionType(
               new LiteralMessage(e.getMessage())).createWithContext(reader);
         }

@@ -15,12 +15,22 @@ public class VersionedCommandSource extends CommandSource {
   @Nullable
   private final com.mojang.brigadier.context.CommandContext<SharedSuggestionProvider> ctx;
   private final Parameter parameter;
+  private final String remaining;
 
   public VersionedCommandSource(
       com.mojang.brigadier.context.@Nullable CommandContext<SharedSuggestionProvider> ctx,
       Parameter parameter) {
     this.ctx = ctx;
     this.parameter = parameter;
+    this.remaining = null;
+  }
+
+  public VersionedCommandSource(
+      com.mojang.brigadier.context.@Nullable CommandContext<SharedSuggestionProvider> ctx,
+      Parameter parameter, String remaining) {
+    this.ctx = ctx;
+    this.parameter = parameter;
+    this.remaining = remaining;
   }
 
   @Override
@@ -34,6 +44,9 @@ public class VersionedCommandSource extends CommandSource {
   @Override
   @NotNull
   public String currentArgInput() {
+    if (this.remaining != null) {
+      return remaining;
+    }
     if (this.parameter == null) {
       return "";
     }

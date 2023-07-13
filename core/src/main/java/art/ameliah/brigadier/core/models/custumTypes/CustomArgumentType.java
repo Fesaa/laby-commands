@@ -1,6 +1,7 @@
 package art.ameliah.brigadier.core.models.custumTypes;
 
 import art.ameliah.brigadier.core.models.CommandContext;
+import art.ameliah.brigadier.core.models.exceptions.CommandException;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
 import art.ameliah.brigadier.core.service.CommandService;
 import java.util.Collection;
@@ -16,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface CustomArgumentType<T, S extends CommandContext> {
 
-  T parse(String string) throws SyntaxException;
+  T parse(StringReaderWrapper reader) throws SyntaxException, CommandException;
 
   Class<S> getCommandContextClass();
 
