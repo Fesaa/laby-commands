@@ -14,6 +14,7 @@ import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.labymod.api.models.Implements;
+import net.labymod.api.util.I18n;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -51,7 +52,7 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
     try {
       transformer = new CommandClassTransformer<>(commandClass);
     } catch (CommandException e) {
-      logger.error("An exception occurred initialising CommandClassTransformer for " + commandClass,
+      logger.error(I18n.translate("brigadier.exceptions.commands.cannotInitialiseCommandClass", commandClass),
           e);
       return false;
     }
@@ -59,7 +60,7 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
     try {
       transformedCommands = transformer.getCommands();
     } catch (CommandException e) {
-      logger.error("An exception occurred getting commands for " + commandClass, e);
+      logger.error(I18n.translate("brigadier.exceptions.commands.cannotGetCommands", commandClass), e);
       return false;
     }
 

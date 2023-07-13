@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Stream;
 import net.labymod.api.client.resources.ResourceLocation;
+import net.labymod.api.util.I18n;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ public class VersionedCommandSource extends CommandSource {
   @Override
   public <V> V getArgument(String name, Class<V> clazz) throws IllegalArgumentException {
     if (this.ctx == null) {
-      throw new IllegalArgumentException("Null source, cannot provide arguments");
+      throw new IllegalArgumentException(I18n.translate("brigadier.exceptions.commands.noCommandSource"));
     }
     return this.ctx.getArgument(name, clazz);
   }

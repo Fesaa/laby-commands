@@ -5,12 +5,11 @@ import art.ameliah.brigadier.core.models.types.CustomArgumentType;
 import art.ameliah.brigadier.core.models.types.StringReaderWrapper;
 import art.ameliah.brigadier.core.models.exceptions.CommandException;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
+import net.labymod.api.util.I18n;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
 public class UUIDArgumentType implements CustomArgumentType<UUID, MyCustomCommandContext> {
-
-  private static final Pattern ALLOWED_CHARACTERS = Pattern.compile("^([-A-Fa-f0-9]+)");
 
   @Override
   public UUID parse(StringReaderWrapper reader) throws SyntaxException, CommandException {
@@ -23,7 +22,7 @@ public class UUIDArgumentType implements CustomArgumentType<UUID, MyCustomComman
       return UUID.fromString(string);
     } catch (IllegalArgumentException ignored) {
       reader.setCursor(start);
-      throw new SyntaxException(string + " is not a valid uuid");
+      throw new SyntaxException(I18n.translate("brigadier.exceptions.types.notAUUID", string));
     }
   }
 

@@ -2,6 +2,7 @@ package art.ameliah.brigadier.core.models.types.defaults.pos;
 
 import art.ameliah.brigadier.core.models.types.StringReaderWrapper;
 import art.ameliah.brigadier.core.models.exceptions.CommandException;
+import net.labymod.api.util.I18n;
 
 public class WorldCoordinate {
 
@@ -16,7 +17,7 @@ public class WorldCoordinate {
 
   public static WorldCoordinate parseInt(StringReaderWrapper reader) throws CommandException {
     if (!reader.canRead()) {
-      throw new CommandException("Expected an integer");
+      throw new CommandException(I18n.translate("brigadier.exceptions.types.notAInteger"));
     } else {
       boolean rel = isRelative(reader);
       float val;

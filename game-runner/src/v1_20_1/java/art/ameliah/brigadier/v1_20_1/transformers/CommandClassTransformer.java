@@ -47,6 +47,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.labymod.api.Laby;
 import net.labymod.api.client.chat.ChatExecutor;
+import net.labymod.api.client.component.Component;
+import net.labymod.api.client.component.format.NamedTextColor;
+import net.labymod.api.util.I18n;
 import net.labymod.v1_20_1.client.network.chat.VersionedTextComponent;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
@@ -114,8 +117,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     int size = parameters.length;
     if (size == 0) {
       throw new CommandException(
-          "Commands must include, and start with, an argument with type CommandContext. (%s)",
-          method);
+          I18n.translate("brigadier.exceptions.commands.wrongNumberOfArgs", method));
     }
 
     boolean hasPassedOptional = false;
@@ -124,20 +126,21 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
 
       if (i == 0 && !parameter.getType()
           .equals(commandClass.getCommandContextClass())) {
-        throw new CommandException("First argument must be CommandContext. (%s)", method);
+        throw new CommandException(I18n.translate("brigadier.exceptions.commands.wrongFirstArg", method));
       }
 
       if (parameter.getType().equals(commandClass.getCommandContextClass())
           && i != 0) {
-        throw new CommandException("CommandContext can only be used as the first argument. (%s)",
-            method);
+        throw new CommandException(I18n.translate("brigadier.exceptions.commands.contextWrongArg", method));
       }
 
       if (parameter.isAnnotationPresent(Greedy.class)) {
         if (i != size - 1) {
-          throw new CommandException("Greedy can only be used on the last argument. (%s)", method);
+          throw new CommandException(I18n.translate("brigadier.exceptions.commands.greedyNotLast", method));
         }
         if (!parameter.getType().equals(String.class)) {
+          // Skipping as wrong impl anyway
+          // TODO: Greedy should repeat any, not capture all text
           throw new CommandException("Greedy can only be used on Strings. (%s)", method);
         }
       }
@@ -146,15 +149,14 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         hasPassedOptional = true;
       } else if (hasPassedOptional) {
         throw new CommandException(
-            "Optional arguments can only be succeeded by optional arguments. (%s)", method);
+            I18n.translate("brigadier.exceptions.commands.optionalBeforeNone", method));
       }
 
       if (parameter.isAnnotationPresent(Bounded.class) &&
           !(Utils.typeIsFloat(parameter.getType()) ||
               Utils.typeIsDouble(parameter.getType()) ||
               Utils.typeIsInt(parameter.getType()))) {
-        throw new CommandException("Bounded can only be used on Integers, Floats and Doubles. (%s)",
-            method);
+        throw new CommandException(I18n.translate("brigadier.exceptions.commands.boundedOnWrongType", method));
       }
     }
   }
@@ -173,13 +175,13 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
             Method checkMethod = commandClass.getClass()
                 .getMethod(check.method(), commandClass.getCommandContextClass());
             if (!checkMethod.canAccess(commandClass)) {
-              throw new CommandException("CheckMethod method (%s) must be public for %s.",
-                  check.method(), method.getName());
+              throw new CommandException(I18n.translate("brigadier.exceptions.commands.checkMethodNotPublic",
+                  check.method(), method.getName()));
             }
             checks.add(checkMethod);
           } catch (NoSuchMethodException e) {
-            throw new CommandException("CheckMethod method (%s) does not exists for %s.",
-                check.method(), method.getName());
+            throw new CommandException(I18n.translate("brigadier.exceptions.commands.checkMethodNotExist",
+                check.method(), method.getName()));
           }
 
           String errorMethodName = check.failedMethod();
@@ -187,13 +189,13 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
             try {
               Method errorMethod = commandClass.getClass().getMethod(errorMethodName);
               if (!errorMethod.canAccess(commandClass)) {
-                throw new CommandException("ErrorMethod method (%s) must be public for %s.",
-                    check.method(), method.getName());
+                throw new CommandException(I18n.translate("brigadier.exceptions.commands.errorMethodNotPublic",
+                    check.method(), method.getName()));
               }
               errorMethods.put(method.getName(), errorMethod);
             } catch (NoSuchMethodException e) {
-              throw new CommandException("ErrorMethod method (%s) does not exists for %s.",
-                  check.method(), method.getName());
+              throw new CommandException(I18n.translate("brigadier.exceptions.commands.errorMethodNotExist",
+                  check.method(), method.getName()));
             }
           }
 
@@ -214,10 +216,10 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         continue;
       }
       if (!Utils.typeIsBool(method.getReturnType())) {
-        throw new CommandException("Command must return a boolean. (%s)", method);
+        throw new CommandException(I18n.translate("brigadier.exceptions.commands.wrongReturnType", method));
       }
       if (!(method.canAccess(commandClass))) {
-        throw new CommandException("Method must be public. (%s)", method);
+        throw new CommandException(I18n.translate("brigadier.exceptions.commands.commandMethodNotPublic", method));
       }
       commandNodes.put(method.getName(), createLiteralArgumentBuilder(method));
     }
@@ -229,7 +231,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       }
       McCommand<S> cmd = commandNodes.get(method.getName());
       if (cmd == null) {
-        throw new CommandException("Found a non existing command? (%s)", method);
+        throw new CommandException(I18n.translate("brigadier.exceptions.commands.commandNotFound", method));
       }
 
       Item<McCommand<S>> item = processedCommands.get(cmd.getLiteral());
@@ -246,8 +248,8 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       McCommand<S> parent = commandNodes.get(parentName);
       if (parent == null) {
         throw new CommandException(
-            "%s's parent %s doesn't exist or isn't annotated with @Command.", method.getName(),
-            parentName);
+            I18n.translate("brigadier.exceptions.commands.parentNotFoundOrNotCommand",
+                method.getName(), parentName));
       }
 
       Item<McCommand<S>> parentItem = processedCommands.get(parentName);
@@ -314,13 +316,13 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           Method autoCompleteFunc = commandClass.getClass().getMethod(autoComplete.method(),
               commandClass.getCommandContextClass());
           if (!autoCompleteFunc.canAccess(commandClass)) {
-            throw new CommandException("Autocomplete method (%s) must be public for %s.",
-                autoComplete.method(), method.getName());
+            throw new CommandException(I18n.translate("brigadier.exceptions.commands.autoCompleteMethodNotPublic",
+                autoComplete.method(), method.getName()));
           }
           autoCompleteMap.put(autoComplete.parameterName(), autoCompleteFunc);
         } catch (NoSuchMethodException e) {
-          throw new CommandException("Autocomplete method (%s) does not exists for %s.",
-              autoComplete.method(), method.getName());
+          throw new CommandException(I18n.translate("brigadier.exceptions.commands.autoCompleteNotExist",
+              autoComplete.method(), method.getName()));
         }
       }
     }
@@ -346,8 +348,8 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         String parameterName = renamer.apply(parameter.getName());
         argumentType = argumentTypeFactory(parameter);
         if (argumentType == null) {
-          throw new CommandException("Unsupported type for argument (%s) with type %s",
-              parameter.getName(), parameter.getType());
+          throw new CommandException(I18n.translate("brigadier.exceptions.commands.unsupportedArgumentType",
+              parameter.getName(), parameter.getType()));
         }
 
         RequiredArgumentBuilder<SharedSuggestionProvider, ?> requiredArgumentBuilder =
@@ -373,8 +375,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           canExec = false;
         } else {
           if (encounteredNonOptional) {
-            throw new CommandException(
-                "Optional arguments can only be succeeded by optional arguments. (%s)", method);
+            throw new CommandException(I18n.translate("brigadier.exceptions.commands.optionalBeforeNone", method));
           }
         }
       }
@@ -406,15 +407,11 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         try {
           checkReturn = check.invoke(commandClass, versionedCtx);
         } catch (InvocationTargetException | IllegalAccessException e) {
-          logger.warn(
-              String.format("Couldn't invoke command check (%s), returning early with value 1.",
-                  check), e);
+          logger.warn(I18n.translate("brigadier.exceptions.commands.checkCannotInvoke", check), e);
           return 1;
         }
         if (!Utils.typeIsBool(checkReturn.getClass())) {
-          logger.warn(
-              String.format("Check %s did not return a boolean, returning early with value 1.",
-                  check));
+          logger.warn(I18n.translate("brigadier.exceptions.commands.checkNotBoolean", check));
           return 1;
         }
         if (!(Boolean) checkReturn) {
@@ -428,9 +425,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           try {
             comp = errorComponent.invoke(commandClass);
           } catch (InvocationTargetException | IllegalAccessException e) {
-            logger.warn(String.format(
-                "Couldn't invoke ErrorComponent method (%s) for check (%s), returning early with value 1.",
-                errorComponent, check), e);
+            logger.warn(I18n.translate("brigadier.exceptions.commands.errorMethodCannotInvoke", errorComponent, check), e);
             return 1;
           }
 
@@ -438,9 +433,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
             chatExecutor.displayClientMessage((VersionedTextComponent) comp);
             return 1;
           }
-          logger.warn(String.format(
-              "ErrorComponent method (%s) returned the wrong type (%s), returning early with value 1.",
-              errorComponent, comp.getClass()));
+          logger.warn(I18n.translate("brigadier.exceptions.commands.errorMethodWrongType", errorComponent, comp.getClass()));
           return 1;
         }
       }
@@ -467,24 +460,20 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
             }
             values.add(obj);
           } catch (IllegalArgumentException | InstantiationException e) {
-            logger.warn(
-                String.format(
-                    "Could not get argument for parameter (%s) because (%s), adding null.", par,
-                    e));
+            logger.warn(I18n.translate("brigadier.exceptions.commands.cannotGetArgument", par, e.getClass()), e);
             values.add(null);
           } catch (NoSuchMethodException | InvocationTargetException |
                    IllegalAccessException invalidException) {
-            logger.error(String.format(
-                "Encounter %s error this should not be possible. These should be checked in validateMethod.",
-                invalidException.getClass()));
+            logger.error(I18n.translate("brigadier.exceptions.commands.impossibleError", invalidException.getClass()));
           }
         });
     Object re;
     try {
       re = method.invoke(commandClass, values.toArray());
     } catch (Exception e) {
-      logger.error("Encountered an error during command invocation", e);
-      chatExecutor.displayClientMessage("Error during command execution. Checks logs.");
+      logger.error(I18n.translate("brigadier.exceptions.commands.commandCannotInvoke"), e);
+      chatExecutor.displayClientMessage(Component.translatable("brigadier.exceptions.commands.defaultError",
+          NamedTextColor.RED));
       return 1;
     }
     return Utils.typeIsBool(re.getClass()) ? (Boolean) re ? 1 : 0 : 0;
@@ -501,7 +490,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           ContextTransformer.createCorrectCtx(context, parameter,
               commandClass.getCommandContextClass()));
     } catch (Exception e) {
-      logger.warn("Suggestions couldn't complete. Returning empty.", e);
+      logger.warn(I18n.translate("brigadier.exceptions.commands.suggestionCannotComplete"), e);
       return Suggestions.empty();
     }
 

@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import net.labymod.api.Laby;
 import net.labymod.api.client.entity.player.ClientPlayer;
+import net.labymod.api.util.I18n;
 import net.labymod.api.util.math.vector.FloatVector3;
 
 public class PositionArgumentType implements
@@ -35,11 +36,11 @@ public class PositionArgumentType implements
             z.get(player.getPosZ()));
       } else {
         reader.setCursor(start);
-        throw new CommandException("Position argument not complete");
+        throw new CommandException(I18n.translate("brigadier.exceptions.types.positionNotComplete"));
       }
     } else {
       reader.setCursor(start);
-      throw new CommandException("Position argument not complete");
+      throw new CommandException(I18n.translate("brigadier.exceptions.types.positionNotComplete"));
     }
   }
 
@@ -68,7 +69,5 @@ public class PositionArgumentType implements
             return false;
           }
         });
-
-
   }
 }

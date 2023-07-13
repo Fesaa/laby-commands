@@ -21,9 +21,7 @@ public abstract class CommandClass<T extends CommandContext> {
    * @return Component displayed when an error occurs during command execution
    */
   public Component errorComponent() {
-    return Component.text(
-        "An error has occurred during the executing of the command. Check your game logs for more information.",
-        NamedTextColor.RED);
+    return Component.translatable("brigadier.exceptions.command.defaultError", NamedTextColor.RED);
   }
 
   /**

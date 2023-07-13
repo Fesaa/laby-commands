@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import javax.inject.Singleton;
+import net.labymod.api.util.I18n;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class CustomArgumentTypeTransformer {
         try {
           suggestions = customSuggestionsCompletableFuture.get();
         } catch (InterruptedException | ExecutionException e) {
-          logger.warn("Suggestions couldn't complete. Returning empty.", e);
+          logger.warn(I18n.translate("brigadier.exceptions.commands.suggestionCannotComplete"), e);
           return Suggestions.empty();
         }
 

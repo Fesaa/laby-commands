@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import net.labymod.api.Laby;
 import net.labymod.api.LabyAPI;
 import net.labymod.api.client.entity.player.Player;
+import net.labymod.api.util.I18n;
 
 public class PlayerArgumentType implements CustomArgumentType<Player, MyCustomCommandContext> {
 
@@ -28,7 +29,8 @@ public class PlayerArgumentType implements CustomArgumentType<Player, MyCustomCo
         .clientWorld()
         .getPlayer(string);
     if (player.isEmpty()) {
-      throw new SyntaxException("%s is not a player", string);
+      reader.setCursor(start);
+      throw new SyntaxException(I18n.translate("brigadier.exceptions.types.notAPlayer", string));
     }
     return player.get();
   }

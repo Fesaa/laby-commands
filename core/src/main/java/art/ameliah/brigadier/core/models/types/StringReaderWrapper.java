@@ -1,6 +1,7 @@
 package art.ameliah.brigadier.core.models.types;
 
 import art.ameliah.brigadier.core.models.exceptions.CommandException;
+import net.labymod.api.util.I18n;
 
 public class StringReaderWrapper {
 
@@ -114,13 +115,13 @@ public class StringReaderWrapper {
     }
     final String number = string.substring(start, cursor);
     if (number.isEmpty()) {
-      throw new CommandException("Expected an integer");
+      throw new CommandException(I18n.translate("brigadier.exceptions.types.notAInteger"));
     }
     try {
       return Integer.parseInt(number);
     } catch (final NumberFormatException ex) {
       cursor = start;
-      throw new CommandException("Expected an integer, got: " + number);
+      throw new CommandException(I18n.translate("brigadier.exceptions.types.notAIntegerBut", number));
     }
   }
 
@@ -131,13 +132,13 @@ public class StringReaderWrapper {
     }
     final String number = string.substring(start, cursor);
     if (number.isEmpty()) {
-      throw new CommandException("Expected a long");
+      throw new CommandException(I18n.translate("brigadier.exceptions.types.notALong"));
     }
     try {
       return Long.parseLong(number);
     } catch (final NumberFormatException ex) {
       cursor = start;
-      throw new CommandException("Expected an long, got: " + number);
+      throw new CommandException(I18n.translate("brigadier.exceptions.types.notALongBut", number));
     }
   }
 
@@ -148,13 +149,13 @@ public class StringReaderWrapper {
     }
     final String number = string.substring(start, cursor);
     if (number.isEmpty()) {
-      throw new CommandException("Expected a double");
+      throw new CommandException(I18n.translate("brigadier.exceptions.types.notADouble"));
     }
     try {
       return Double.parseDouble(number);
     } catch (final NumberFormatException ex) {
       cursor = start;
-      throw new CommandException("Expected an double, got: " + number);
+      throw new CommandException(I18n.translate("brigadier.exceptions.types.notAFloatBut", number));
     }
   }
 
@@ -165,13 +166,13 @@ public class StringReaderWrapper {
     }
     final String number = string.substring(start, cursor);
     if (number.isEmpty()) {
-      throw new CommandException("Expected an double");
+      throw new CommandException(I18n.translate("brigadier.exceptions.types.notAFloat"));
     }
     try {
       return Float.parseFloat(number);
     } catch (final NumberFormatException ex) {
       cursor = start;
-      throw new CommandException("Expected an double, got: " + number);
+      throw new CommandException(I18n.translate("brigadier.exceptions.types.notAFloatBut", number));
     }
   }
 

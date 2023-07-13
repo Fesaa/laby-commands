@@ -1,10 +1,12 @@
 package art.ameliah.brigadier.core.models.exceptions;
 
 
+import net.labymod.api.util.I18n;
+
 public class CommandException extends Exception {
 
   public CommandException() {
-    super("An unknown error occurred building the command");
+    super(I18n.translate("brigadier.commands.exceptions.unknown"));
   }
 
   public CommandException(String msg) {
