@@ -1,10 +1,10 @@
-package art.ameliah.brigadier.core.models.defaultCustomTypes.player;
+package art.ameliah.brigadier.core.models.types.defaults.player;
 
 import art.ameliah.brigadier.core.commands.customTypes.MyCustomCommandContext;
-import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
-import art.ameliah.brigadier.core.models.custumTypes.CustomSuggestion;
-import art.ameliah.brigadier.core.models.custumTypes.CustomSuggestions;
-import art.ameliah.brigadier.core.models.custumTypes.StringReaderWrapper;
+import art.ameliah.brigadier.core.models.types.CustomArgumentType;
+import art.ameliah.brigadier.core.models.types.CustomSuggestion;
+import art.ameliah.brigadier.core.models.types.CustomSuggestions;
+import art.ameliah.brigadier.core.models.types.StringReaderWrapper;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
 import java.util.List;
 import java.util.Optional;

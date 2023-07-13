@@ -1,4 +1,4 @@
-package art.ameliah.brigadier.core.models.custumTypes;
+package art.ameliah.brigadier.core.models.types;
 
 import art.ameliah.brigadier.core.models.annotations.Command;
 import org.jetbrains.annotations.Nullable;

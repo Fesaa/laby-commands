@@ -1,4 +1,4 @@
-package art.ameliah.brigadier.core.models.defaultCustomTypes.pos;
+package art.ameliah.brigadier.core.models.types.defaults.pos;
 
 public class TextCoordinates {
 

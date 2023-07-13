@@ -1,9 +1,9 @@
 package art.ameliah.brigadier.v1_20_1.transformers;
 
-import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
-import art.ameliah.brigadier.core.models.custumTypes.CustomSuggestion;
-import art.ameliah.brigadier.core.models.custumTypes.CustomSuggestions;
-import art.ameliah.brigadier.core.models.custumTypes.StringReaderWrapper;
+import art.ameliah.brigadier.core.models.types.CustomArgumentType;
+import art.ameliah.brigadier.core.models.types.CustomSuggestion;
+import art.ameliah.brigadier.core.models.types.CustomSuggestions;
+import art.ameliah.brigadier.core.models.types.StringReaderWrapper;
 import art.ameliah.brigadier.core.models.exceptions.CommandException;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
 import com.mojang.brigadier.LiteralMessage;

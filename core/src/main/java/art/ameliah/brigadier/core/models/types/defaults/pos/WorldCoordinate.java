@@ -1,6 +1,6 @@
-package art.ameliah.brigadier.core.models.defaultCustomTypes.pos;
+package art.ameliah.brigadier.core.models.types.defaults.pos;
 
-import art.ameliah.brigadier.core.models.custumTypes.StringReaderWrapper;
+import art.ameliah.brigadier.core.models.types.StringReaderWrapper;
 import art.ameliah.brigadier.core.models.exceptions.CommandException;
 
 public class WorldCoordinate {

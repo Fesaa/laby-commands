@@ -1,6 +1,6 @@
-package art.ameliah.brigadier.core.models.defaultCustomTypes.player;
+package art.ameliah.brigadier.core.models.types.defaults.player;
 
-import art.ameliah.brigadier.core.models.custumTypes.CustomType;
+import art.ameliah.brigadier.core.models.types.CustomType;
 import net.labymod.api.client.entity.player.Player;
 
 public class PlayerType extends CustomType<Player> {

@@ -1,6 +1,6 @@
-package art.ameliah.brigadier.core.models.defaultCustomTypes.pos;
+package art.ameliah.brigadier.core.models.types.defaults.pos;
 
-import art.ameliah.brigadier.core.models.custumTypes.CustomType;
+import art.ameliah.brigadier.core.models.types.CustomType;
 import net.labymod.api.util.math.vector.FloatVector3;
 
 public class PositionType extends CustomType<FloatVector3> {

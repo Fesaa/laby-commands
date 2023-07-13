@@ -1,6 +1,6 @@
 package art.ameliah.brigadier.core.commands.customTypes;
 
-import art.ameliah.brigadier.core.models.custumTypes.CustomType;
+import art.ameliah.brigadier.core.models.types.CustomType;
 
 public class Fraction extends CustomType<Float> {
 

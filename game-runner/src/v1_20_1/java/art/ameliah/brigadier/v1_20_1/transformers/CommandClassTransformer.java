@@ -18,7 +18,7 @@ import art.ameliah.brigadier.core.models.annotations.Greedy;
 import art.ameliah.brigadier.core.models.annotations.Named;
 import art.ameliah.brigadier.core.models.annotations.NoCallback;
 import art.ameliah.brigadier.core.models.annotations.Optional;
-import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
+import art.ameliah.brigadier.core.models.types.CustomArgumentType;
 import art.ameliah.brigadier.core.models.exceptions.CommandException;
 import art.ameliah.brigadier.core.utils.DequeCollector;
 import art.ameliah.brigadier.core.utils.Item;

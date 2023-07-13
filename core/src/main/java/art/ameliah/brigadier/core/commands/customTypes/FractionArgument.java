@@ -1,7 +1,7 @@
 package art.ameliah.brigadier.core.commands.customTypes;
 
-import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
-import art.ameliah.brigadier.core.models.custumTypes.StringReaderWrapper;
+import art.ameliah.brigadier.core.models.types.CustomArgumentType;
+import art.ameliah.brigadier.core.models.types.StringReaderWrapper;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
 import java.util.Collection;
 import java.util.List;

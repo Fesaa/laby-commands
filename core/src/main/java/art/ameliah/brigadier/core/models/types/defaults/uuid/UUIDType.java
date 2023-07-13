@@ -1,6 +1,6 @@
-package art.ameliah.brigadier.core.models.defaultCustomTypes.uuid;
+package art.ameliah.brigadier.core.models.types.defaults.uuid;
 
-import art.ameliah.brigadier.core.models.custumTypes.CustomType;
+import art.ameliah.brigadier.core.models.types.CustomType;
 import java.util.UUID;
 
 public class UUIDType extends CustomType<UUID> {

@@ -1,9 +1,9 @@
-package art.ameliah.brigadier.core.models.defaultCustomTypes.pos;
+package art.ameliah.brigadier.core.models.types.defaults.pos;
 
 import art.ameliah.brigadier.core.commands.customTypes.MyCustomCommandContext;
-import art.ameliah.brigadier.core.models.custumTypes.CustomArgumentType;
-import art.ameliah.brigadier.core.models.custumTypes.CustomSuggestions;
-import art.ameliah.brigadier.core.models.custumTypes.StringReaderWrapper;
+import art.ameliah.brigadier.core.models.types.CustomArgumentType;
+import art.ameliah.brigadier.core.models.types.CustomSuggestions;
+import art.ameliah.brigadier.core.models.types.StringReaderWrapper;
 import art.ameliah.brigadier.core.models.exceptions.CommandException;
 import art.ameliah.brigadier.core.models.exceptions.SyntaxException;
 import java.util.Collections;

@@ -1,6 +1,6 @@
-package art.ameliah.brigadier.core.models.custumTypes;
+package art.ameliah.brigadier.core.models.types;
 
-import art.ameliah.brigadier.core.models.defaultCustomTypes.pos.TextCoordinates;
+import art.ameliah.brigadier.core.models.types.defaults.pos.TextCoordinates;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
