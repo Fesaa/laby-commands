@@ -8,6 +8,7 @@ import art.ameliah.brigadier.core.models.annotations.NoCallback;
 import art.ameliah.brigadier.core.models.annotations.Optional;
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.component.format.NamedTextColor;
+import org.jetbrains.annotations.NotNull;
 
 public class ComplicatedBranching extends CommandClass<MyCustomCommandContext> {
 
@@ -54,7 +55,7 @@ public class ComplicatedBranching extends CommandClass<MyCustomCommandContext> {
   }
 
   @Override
-  public Class<MyCustomCommandContext> getCommandContextClass() {
+  public @NotNull Class<MyCustomCommandContext> getCommandContextClass() {
     return MyCustomCommandContext.class;
   }
 }

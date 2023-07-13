@@ -10,6 +10,7 @@ import art.ameliah.brigadier.core.utils.CyclicCollection;
 import art.ameliah.brigadier.core.utils.Utils;
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.component.format.NamedTextColor;
+import org.jetbrains.annotations.NotNull;
 
 public class ColourCommands extends CommandClass<MyCustomCommandContext> {
 
@@ -62,7 +63,7 @@ public class ColourCommands extends CommandClass<MyCustomCommandContext> {
   }
 
   @Override
-  public Class<MyCustomCommandContext> getCommandContextClass() {
+  public @NotNull Class<MyCustomCommandContext> getCommandContextClass() {
     return MyCustomCommandContext.class;
   }
 }

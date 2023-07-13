@@ -5,6 +5,7 @@ import art.ameliah.brigadier.core.models.CommandClass;
 import art.ameliah.brigadier.core.models.annotations.Command;
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.component.format.NamedTextColor;
+import org.jetbrains.annotations.NotNull;
 
 public class ServerSpecificCommands extends CommandClass<MyCustomCommandContext> {
 
@@ -32,7 +33,7 @@ public class ServerSpecificCommands extends CommandClass<MyCustomCommandContext>
   }
 
   @Override
-  public Class<MyCustomCommandContext> getCommandContextClass() {
+  public @NotNull Class<MyCustomCommandContext> getCommandContextClass() {
     return MyCustomCommandContext.class;
   }
 }

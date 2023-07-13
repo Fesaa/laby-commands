@@ -3,6 +3,7 @@ package art.ameliah.brigadier.core.models;
 import art.ameliah.brigadier.core.models.annotations.Check;
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.component.format.NamedTextColor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Classes containing commands should extend this class.
@@ -14,7 +15,7 @@ public abstract class CommandClass<T extends CommandContext> {
    */
   public abstract Component noPermissionComponent();
 
-  public abstract Class<T> getCommandContextClass();
+  public abstract @NotNull Class<T> getCommandContextClass();
 
   /**
    * @return Component displayed when an error occurs during command execution
