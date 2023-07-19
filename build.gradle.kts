@@ -3,19 +3,18 @@ plugins {
     id("net.labymod.gradle")
     id("net.labymod.gradle.addon")
 }
-
 group = "org.example"
 version = "1.0.0"
 
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 
 labyMod {
-    defaultPackageName = "art.ameliah.brigadier" //change this to your main package name (used by all modules)
+    defaultPackageName = "art.ameliah.laby.addons.library.commands" //change this to your main package name (used by all modules)
     addonInfo {
-        namespace = "brigadier"
-        displayName = "TEST"
+        namespace = "commands"
+        displayName = "CommandLibrary"
         author = "Amelia"
-        description = "UwU"
+        description = "Amelia's CommandLibrary for Laby4 addons"
         minecraftVersion = "*"
         version = System.getenv().getOrDefault("VERSION", "0.0.1")
     }
@@ -37,10 +36,6 @@ labyMod {
     addonDev {
         productionRelease()
     }
-}
-
-tasks.compileJava {
-    options.compilerArgs.add("-parameters");
 }
 
 subprojects {
