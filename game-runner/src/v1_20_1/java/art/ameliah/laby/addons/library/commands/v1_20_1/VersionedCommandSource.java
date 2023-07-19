@@ -5,29 +5,28 @@ import java.lang.reflect.Parameter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Stream;
+import com.mojang.brigadier.context.CommandContext;
 import net.labymod.api.client.resources.ResourceLocation;
 import net.labymod.api.util.I18n;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VersionedCommandSource extends CommandSource {
+public class VersionedCommandSource implements CommandSource {
 
   @Nullable
-  private final com.mojang.brigadier.context.CommandContext<SharedSuggestionProvider> ctx;
+  private final CommandContext<SharedSuggestionProvider> ctx;
   private final Parameter parameter;
   private final String remaining;
 
-  public VersionedCommandSource(
-      com.mojang.brigadier.context.@Nullable CommandContext<SharedSuggestionProvider> ctx,
+  public VersionedCommandSource(@Nullable CommandContext<SharedSuggestionProvider> ctx,
       Parameter parameter) {
     this.ctx = ctx;
     this.parameter = parameter;
     this.remaining = null;
   }
 
-  public VersionedCommandSource(
-      com.mojang.brigadier.context.@Nullable CommandContext<SharedSuggestionProvider> ctx,
+  public VersionedCommandSource(@Nullable CommandContext<SharedSuggestionProvider> ctx,
       Parameter parameter, String remaining) {
     this.ctx = ctx;
     this.parameter = parameter;
@@ -69,7 +68,9 @@ public class VersionedCommandSource extends CommandSource {
     if (this.ctx == null) {
       return Stream.empty();
     }
-    return this.ctx.getSource().getAvailableSounds()
+    return this.ctx
+        .getSource()
+        .getAvailableSounds()
         .map(loc -> ResourceLocation.create(loc.getNamespace(), loc.getPath()));
   }
 

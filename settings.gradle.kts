@@ -1,4 +1,4 @@
-rootProject.name = "brigadier"
+rootProject.name = "commands"
 
 pluginManagement {
     val labyGradlePluginVersion = "0.3.28"

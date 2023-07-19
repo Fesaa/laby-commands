@@ -18,10 +18,8 @@ public class ContextTransformer {
   }
 
   public static <S extends art.ameliah.laby.addons.library.commands.core.models.CommandContext> @Nullable S createCorrectCtx(
-      CommandContext<SharedSuggestionProvider> ctx, Parameter parameter, Class<S> commandContext,
-      String remaining) {
-    VersionedCommandSource versionedCtxSource = new VersionedCommandSource(ctx, parameter,
-        remaining);
+      CommandContext<SharedSuggestionProvider> ctx, Parameter parameter, Class<S> commandContext, String remaining) {
+    VersionedCommandSource versionedCtxSource = new VersionedCommandSource(ctx, parameter, remaining);
     return create(commandContext, versionedCtxSource);
   }
 

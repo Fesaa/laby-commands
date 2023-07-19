@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Wrapper around the Mojang provided source
  */
-public abstract class CommandSource {
+public interface CommandSource {
 
   /**
    * @param name  Name of the argument
@@ -16,7 +16,7 @@ public abstract class CommandSource {
    * @return Returns the value of the argument if present
    * @throws IllegalArgumentException If the argument isn't present an exception is thrown
    */
-  public abstract <V> V getArgument(String name, Class<V> clazz) throws IllegalArgumentException;
+   <V> V getArgument(String name, Class<V> clazz) throws IllegalArgumentException;
 
   /**
    * Returns an empty string if input isn't found. Only present in AutoComplete callbacks
@@ -24,23 +24,23 @@ public abstract class CommandSource {
    * @return The input for the current argument
    */
   @NotNull
-  public abstract String currentArgInput();
+  String currentArgInput();
 
   /**
    * The command as typed by the user in the chat box
    *
    * @return The full command string
    */
-  public abstract String getInput();
+  String getInput();
 
   @NotNull
-  public abstract Stream<ResourceLocation> getAvailableSounds();
+  Stream<ResourceLocation> getAvailableSounds();
 
   @NotNull
-  public abstract Collection<String> getAllTeams();
+  Collection<String> getAllTeams();
 
   @NotNull
-  public abstract Collection<String> getOnlinePlayerNames();
+  Collection<String> getOnlinePlayerNames();
 
 
 }
