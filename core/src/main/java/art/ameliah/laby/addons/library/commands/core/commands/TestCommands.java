@@ -12,13 +12,15 @@ import art.ameliah.laby.addons.library.commands.core.models.annotations.Greedy;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Named;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-import art.ameliah.laby.addons.library.commands.core.models.types.defaults.player.PlayerType;
+import art.ameliah.laby.addons.library.commands.core.models.types.defaults.NetworkPlayer.NetworkPlayerType;
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.component.format.NamedTextColor;
 import net.labymod.api.client.entity.player.ClientPlayer;
 import net.labymod.api.client.entity.player.GameMode;
+import net.labymod.api.client.network.NetworkPlayerInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +38,12 @@ public class TestCommands extends CommandClass<MyCustomCommandContext> {
   }
 
   @Command
-  public boolean playerList(MyCustomCommandContext ctx, PlayerType[] players) {
+  public boolean playerList(MyCustomCommandContext ctx, NetworkPlayerType[] players) {
     ctx.displayClientMessage("Players: " + Arrays.stream(players)
-        .map(PlayerType::get)
-        .map(el -> " " + el)
-        .collect(Collectors.joining()));
+        .map(NetworkPlayerType::get)
+        .filter(Objects::nonNull)
+        .map(el -> String.format("[Name: %s, Health: %s]", el.profile().getUsername(), el.getHealth()))
+        .collect(Collectors.joining(",\n")));
     return true;
   }
 

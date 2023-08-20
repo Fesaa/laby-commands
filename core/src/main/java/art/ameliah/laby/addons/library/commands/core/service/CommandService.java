@@ -3,6 +3,8 @@ package art.ameliah.laby.addons.library.commands.core.service;
 import art.ameliah.laby.addons.library.commands.core.models.CommandClass;
 import art.ameliah.laby.addons.library.commands.core.models.CommandContext;
 import art.ameliah.laby.addons.library.commands.core.models.types.CustomArgumentType;
+import art.ameliah.laby.addons.library.commands.core.models.types.defaults.NetworkPlayer.NetworkPlayerArgumentType;
+import art.ameliah.laby.addons.library.commands.core.models.types.defaults.NetworkPlayer.NetworkPlayerType;
 import art.ameliah.laby.addons.library.commands.core.models.types.defaults.player.PlayerType;
 import art.ameliah.laby.addons.library.commands.core.models.types.defaults.player.PlayerArgumentType;
 import art.ameliah.laby.addons.library.commands.core.models.types.defaults.pos.PositionType;
@@ -34,6 +36,7 @@ public abstract class CommandService<T extends CommandContext> {
     this.registerCustomArgumentType(PlayerType.class, new PlayerArgumentType());
     this.registerCustomArgumentType(PositionType.class, new PositionArgumentType());
     this.registerCustomArgumentType(UUIDType.class, new UUIDArgumentType());
+    this.registerCustomArgumentType(NetworkPlayerType.class, new NetworkPlayerArgumentType());
   }
 
   public CustomArgumentType<?, ?> getCustomArgument(Class<?> clazz) {
