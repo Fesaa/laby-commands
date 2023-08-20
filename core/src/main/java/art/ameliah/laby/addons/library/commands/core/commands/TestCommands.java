@@ -3,7 +3,6 @@ package art.ameliah.laby.addons.library.commands.core.commands;
 import art.ameliah.laby.addons.library.commands.core.commands.customTypes.Fraction;
 import art.ameliah.laby.addons.library.commands.core.commands.customTypes.MyCustomCommandContext;
 import art.ameliah.laby.addons.library.commands.core.models.CommandClass;
-import art.ameliah.laby.addons.library.commands.core.models.CommandContext;
 import art.ameliah.laby.addons.library.commands.core.models.CommandSource;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.AutoComplete;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Bounded;
@@ -12,7 +11,9 @@ import art.ameliah.laby.addons.library.commands.core.models.annotations.Command;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Greedy;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Named;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Optional;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.component.format.NamedTextColor;
@@ -31,6 +32,16 @@ public class TestCommands extends CommandClass<MyCustomCommandContext> {
   @Override
   public @NotNull Class<MyCustomCommandContext> getCommandContextClass() {
     return MyCustomCommandContext.class;
+  }
+
+  @Command
+  public boolean test(MyCustomCommandContext ctx, Fraction[] numbers, String s) {
+    ctx.displayClientMessage("Executed test with: " + Arrays.stream(numbers)
+        .map(Fraction::get)
+        .map(el -> " " + el)
+        .collect(Collectors.joining())
+        + " and " + s);
+    return true;
   }
 
   @Command

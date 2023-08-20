@@ -31,6 +31,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -53,6 +54,7 @@ import net.labymod.api.util.I18n;
 import net.labymod.v1_20_1.client.network.chat.VersionedTextComponent;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +75,8 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     populateCheckMaps();
   }
 
-  static ArgumentType<?> argumentTypeFactory(Parameter parameter) {
+  static @Nullable ArgumentType<?> argumentTypeFactory(@NotNull Parameter parameter)
+      throws CommandException {
     Class<?> type = parameter.getType();
     if (Utils.typeIsInt(type)) {
       if (parameter.isAnnotationPresent(Bounded.class)) {
@@ -101,6 +104,14 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     }
     if (type.equals(String.class)) {
       return parameter.isAnnotationPresent(Greedy.class) ? greedyString() : word();
+    }
+
+    if (type.isArray()) {
+      Class<?> componentType = type.getComponentType();
+      if (componentType.isPrimitive()) {
+        throw new CommandException("Array argument cannot contain a primitive type: " + componentType.getName());
+      }
+      return ArrayTransformer.transform(VersionedCommandService.get(), componentType);
     }
 
     CustomArgumentType<?, ?> customArgumentType = VersionedCommandService.get()
@@ -456,7 +467,34 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
               Constructor<?> constructor = clazz.getConstructor(returnClass);
               obj = constructor.newInstance(ctx.getArgument(name, returnClass));
             } else {
-              obj = ctx.getArgument(name, par.getType());
+              if (par.getType().isArray()) {
+                Object[] arr = ctx.getArgument(name, Object[].class);
+                obj =  Arrays.stream(arr).map((el) -> {
+                  if (VersionedCommandService.get().isCustomArgument(par.getType().getComponentType())) {
+                    try {
+                      Class<?> clazzz = par.getType().getComponentType();
+                      Method classGetter = clazzz.getMethod("getClassType");
+                      Object returnValue = classGetter.invoke(clazzz);
+                      Class<?> returnClass = (Class<?>) returnValue;
+
+                      Constructor<?> constructor = clazzz.getConstructor(returnClass);
+                      return constructor.newInstance(el);
+                    } catch (IllegalArgumentException | InstantiationException e) {
+                      logger.warn(I18n.translate("brigadier.exceptions.commands.cannotGetArgument", par, e.getClass()), e);
+                      return null;
+                    } catch (NoSuchMethodException | InvocationTargetException |
+                             IllegalAccessException invalidException) {
+                      logger.error(I18n.translate("brigadier.exceptions.commands.impossibleError", invalidException.getClass()));
+                      return null;
+                    }
+                  } else {
+                   return par.getType().getComponentType().cast(el);
+                  }})
+                    .toArray(size -> (Object[]) Array.newInstance(par.getType().getComponentType(), arr.length));
+              } else {
+                obj = ctx.getArgument(name, par.getType());
+              }
+
             }
             values.add(obj);
           } catch (IllegalArgumentException | InstantiationException e) {
