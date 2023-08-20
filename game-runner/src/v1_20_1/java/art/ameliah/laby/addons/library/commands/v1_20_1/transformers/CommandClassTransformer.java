@@ -17,7 +17,6 @@ import art.ameliah.laby.addons.library.commands.core.models.annotations.Command;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Greedy;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Named;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.NoCallback;
-import art.ameliah.laby.addons.library.commands.core.models.annotations.Optional;
 import art.ameliah.laby.addons.library.commands.core.models.types.CustomArgumentType;
 import art.ameliah.laby.addons.library.commands.core.models.exceptions.CommandException;
 import art.ameliah.laby.addons.library.commands.core.utils.DequeCollector;
@@ -156,7 +155,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         }
       }
 
-      if (parameter.isAnnotationPresent(Optional.class)) {
+      if (parameter.isAnnotationPresent(Nullable.class)) {
         hasPassedOptional = true;
       } else if (hasPassedOptional) {
         throw new CommandException(
@@ -381,7 +380,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
             ? requiredArgumentBuilder
             : requiredArgumentBuilder.then(tail);
 
-        if (!parameter.isAnnotationPresent(Optional.class)) {
+        if (!parameter.isAnnotationPresent(Nullable.class)) {
           encounteredNonOptional = true;
           canExec = false;
         } else {

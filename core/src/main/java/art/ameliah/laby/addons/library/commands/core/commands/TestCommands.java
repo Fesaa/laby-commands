@@ -10,7 +10,6 @@ import art.ameliah.laby.addons.library.commands.core.models.annotations.Check;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Command;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Greedy;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Named;
-import art.ameliah.laby.addons.library.commands.core.models.annotations.Optional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,6 +19,7 @@ import net.labymod.api.client.component.format.NamedTextColor;
 import net.labymod.api.client.entity.player.ClientPlayer;
 import net.labymod.api.client.entity.player.GameMode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TestCommands extends CommandClass<MyCustomCommandContext> {
 
@@ -68,7 +68,7 @@ public class TestCommands extends CommandClass<MyCustomCommandContext> {
   @AutoComplete(method = "autocompleteName", parameterName = "name")
   @AutoComplete(method = "autocompleteOther", parameterName = "arg3")
   public boolean numbers(MyCustomCommandContext ctx, @Bounded(max_int = 10) Integer i, String name,
-      String other, Boolean b, @Optional @Greedy String theRest) {
+      String other, Boolean b, @Nullable @Greedy String theRest) {
     ctx.displayClientMessage(
         "Number: " + i + " Name: " + name + " Other: " + other + " Bool: " + b + " Rest?: "
             + theRest);
@@ -94,7 +94,7 @@ public class TestCommands extends CommandClass<MyCustomCommandContext> {
 
   @Command
   public boolean optionals(MyCustomCommandContext ctx, String name, String other,
-      @Optional String third) {
+      @Nullable String third) {
     ctx.displayClientMessage(name + " " + other + (third == null ? "" : " " + third));
     return true;
   }

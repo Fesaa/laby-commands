@@ -5,10 +5,10 @@ import art.ameliah.laby.addons.library.commands.core.models.CommandClass;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Command;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Greedy;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.NoCallback;
-import art.ameliah.laby.addons.library.commands.core.models.annotations.Optional;
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.component.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ComplicatedBranching extends CommandClass<MyCustomCommandContext> {
 
@@ -43,7 +43,7 @@ public class ComplicatedBranching extends CommandClass<MyCustomCommandContext> {
   }
 
   @Command(parent = "baseTwo")
-  public boolean secondBranchTwo(MyCustomCommandContext ctx, @Optional Float weight) {
+  public boolean secondBranchTwo(MyCustomCommandContext ctx, @Nullable Float weight) {
     ctx.displayClientMessage("secondBranchTwo " + (weight == null ? "" : weight));
     return true;
   }
