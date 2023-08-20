@@ -37,7 +37,8 @@
         "suggestionCannotComplete": "Suggestions couldn't complete. Returning empty.",
         "cannotInitialiseCommandClass": "An exception occurred initialising CommandClassTransformer for %s",
         "cannotGetCommands": "An exception occurred getting commands for %s",
-        "noCommandSource": "Null source, cannot provide arguments"
+        "noCommandSource": "Null source, cannot provide arguments",
+        "cannotInitialiseCustomArgument": "An exception occurred initialising CustomArgument for %s"
       },
       "types": {
         "notAPlayer": "%s is not a player",

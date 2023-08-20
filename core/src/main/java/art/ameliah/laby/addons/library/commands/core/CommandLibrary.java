@@ -10,8 +10,6 @@ import art.ameliah.laby.addons.library.commands.core.commands.customTypes.Fracti
 import art.ameliah.laby.addons.library.commands.core.commands.customTypes.FractionArgument;
 import art.ameliah.laby.addons.library.commands.core.commands.customTypes.MyCustomCommandContext;
 import art.ameliah.laby.addons.library.commands.core.generated.DefaultReferenceStorage;
-import art.ameliah.laby.addons.library.commands.core.models.CommandClass;
-import art.ameliah.laby.addons.library.commands.core.models.CommandContext;
 import art.ameliah.laby.addons.library.commands.core.service.CommandService;
 import art.ameliah.laby.addons.library.commands.core.service.DefaultCommandService;
 import net.labymod.api.addon.LabyAddon;
@@ -43,7 +41,6 @@ public class CommandLibrary extends LabyAddon<LibraryConfig> {
     if (commandService == null) {
       commandService = new DefaultCommandService<>();
     }
-    commandService.registerCustomArgumentType(Fraction.class, new FractionArgument());
     commandService.registerCustomArgumentType(Fraction.class, new FractionArgument());
 
     commandService.registerCommand(new TestCommands());

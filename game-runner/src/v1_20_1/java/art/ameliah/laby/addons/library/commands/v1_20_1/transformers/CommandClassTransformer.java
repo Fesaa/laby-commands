@@ -1,5 +1,8 @@
 package art.ameliah.laby.addons.library.commands.v1_20_1.transformers;
 
+import static art.ameliah.laby.addons.library.commands.v1_20_1.transformers.HelperTransformers.arrayMapper;
+import static art.ameliah.laby.addons.library.commands.v1_20_1.transformers.HelperTransformers.constructCustomArgumentFromContext;
+import static art.ameliah.laby.addons.library.commands.v1_20_1.transformers.HelperTransformers.getArgument;
 import static com.mojang.brigadier.arguments.BoolArgumentType.bool;
 import static com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg;
 import static com.mojang.brigadier.arguments.FloatArgumentType.floatArg;
@@ -17,8 +20,8 @@ import art.ameliah.laby.addons.library.commands.core.models.annotations.Command;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Greedy;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.Named;
 import art.ameliah.laby.addons.library.commands.core.models.annotations.NoCallback;
-import art.ameliah.laby.addons.library.commands.core.models.types.CustomArgumentType;
 import art.ameliah.laby.addons.library.commands.core.models.exceptions.CommandException;
+import art.ameliah.laby.addons.library.commands.core.models.types.CustomArgumentType;
 import art.ameliah.laby.addons.library.commands.core.utils.DequeCollector;
 import art.ameliah.laby.addons.library.commands.core.utils.Item;
 import art.ameliah.laby.addons.library.commands.core.utils.Utils;
@@ -31,7 +34,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -108,7 +110,8 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
     if (type.isArray()) {
       Class<?> componentType = type.getComponentType();
       if (componentType.isPrimitive()) {
-        throw new CommandException("Array argument cannot contain a primitive type: " + componentType.getName());
+        throw new CommandException(
+            "Array argument cannot contain a primitive type: " + componentType.getName());
       }
       return ArrayTransformer.transform(VersionedCommandService.get(), componentType);
     }
@@ -136,17 +139,20 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
 
       if (i == 0 && !parameter.getType()
           .equals(commandClass.getCommandContextClass())) {
-        throw new CommandException(I18n.translate("brigadier.exceptions.commands.wrongFirstArg", method));
+        throw new CommandException(
+            I18n.translate("brigadier.exceptions.commands.wrongFirstArg", method));
       }
 
       if (parameter.getType().equals(commandClass.getCommandContextClass())
           && i != 0) {
-        throw new CommandException(I18n.translate("brigadier.exceptions.commands.contextWrongArg", method));
+        throw new CommandException(
+            I18n.translate("brigadier.exceptions.commands.contextWrongArg", method));
       }
 
       if (parameter.isAnnotationPresent(Greedy.class)) {
         if (i != size - 1) {
-          throw new CommandException(I18n.translate("brigadier.exceptions.commands.greedyNotLast", method));
+          throw new CommandException(
+              I18n.translate("brigadier.exceptions.commands.greedyNotLast", method));
         }
         if (!parameter.getType().equals(String.class)) {
           // Skipping as wrong impl anyway
@@ -166,7 +172,8 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           !(Utils.typeIsFloat(parameter.getType()) ||
               Utils.typeIsDouble(parameter.getType()) ||
               Utils.typeIsInt(parameter.getType()))) {
-        throw new CommandException(I18n.translate("brigadier.exceptions.commands.boundedOnWrongType", method));
+        throw new CommandException(
+            I18n.translate("brigadier.exceptions.commands.boundedOnWrongType", method));
       }
     }
   }
@@ -185,13 +192,15 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
             Method checkMethod = commandClass.getClass()
                 .getMethod(check.method(), commandClass.getCommandContextClass());
             if (!checkMethod.canAccess(commandClass)) {
-              throw new CommandException(I18n.translate("brigadier.exceptions.commands.checkMethodNotPublic",
-                  check.method(), method.getName()));
+              throw new CommandException(
+                  I18n.translate("brigadier.exceptions.commands.checkMethodNotPublic",
+                      check.method(), method.getName()));
             }
             checks.add(checkMethod);
           } catch (NoSuchMethodException e) {
-            throw new CommandException(I18n.translate("brigadier.exceptions.commands.checkMethodNotExist",
-                check.method(), method.getName()));
+            throw new CommandException(
+                I18n.translate("brigadier.exceptions.commands.checkMethodNotExist",
+                    check.method(), method.getName()));
           }
 
           String errorMethodName = check.failedMethod();
@@ -199,13 +208,15 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
             try {
               Method errorMethod = commandClass.getClass().getMethod(errorMethodName);
               if (!errorMethod.canAccess(commandClass)) {
-                throw new CommandException(I18n.translate("brigadier.exceptions.commands.errorMethodNotPublic",
-                    check.method(), method.getName()));
+                throw new CommandException(
+                    I18n.translate("brigadier.exceptions.commands.errorMethodNotPublic",
+                        check.method(), method.getName()));
               }
               errorMethods.put(method.getName(), errorMethod);
             } catch (NoSuchMethodException e) {
-              throw new CommandException(I18n.translate("brigadier.exceptions.commands.errorMethodNotExist",
-                  check.method(), method.getName()));
+              throw new CommandException(
+                  I18n.translate("brigadier.exceptions.commands.errorMethodNotExist",
+                      check.method(), method.getName()));
             }
           }
 
@@ -226,10 +237,12 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         continue;
       }
       if (!Utils.typeIsBool(method.getReturnType())) {
-        throw new CommandException(I18n.translate("brigadier.exceptions.commands.wrongReturnType", method));
+        throw new CommandException(
+            I18n.translate("brigadier.exceptions.commands.wrongReturnType", method));
       }
       if (!(method.canAccess(commandClass))) {
-        throw new CommandException(I18n.translate("brigadier.exceptions.commands.commandMethodNotPublic", method));
+        throw new CommandException(
+            I18n.translate("brigadier.exceptions.commands.commandMethodNotPublic", method));
       }
       commandNodes.put(method.getName(), createLiteralArgumentBuilder(method));
     }
@@ -241,7 +254,8 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       }
       McCommand<S> cmd = commandNodes.get(method.getName());
       if (cmd == null) {
-        throw new CommandException(I18n.translate("brigadier.exceptions.commands.commandNotFound", method));
+        throw new CommandException(
+            I18n.translate("brigadier.exceptions.commands.commandNotFound", method));
       }
 
       Item<McCommand<S>> item = processedCommands.get(cmd.getLiteral());
@@ -250,7 +264,7 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       }
 
       String parentName = method.getAnnotation(Command.class).parent();
-      if (parentName.equals("")) {
+      if (parentName.isEmpty()) {
         processedCommands.put(cmd.getLiteral(), item);
         continue;
       }
@@ -326,13 +340,15 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           Method autoCompleteFunc = commandClass.getClass().getMethod(autoComplete.method(),
               commandClass.getCommandContextClass());
           if (!autoCompleteFunc.canAccess(commandClass)) {
-            throw new CommandException(I18n.translate("brigadier.exceptions.commands.autoCompleteMethodNotPublic",
-                autoComplete.method(), method.getName()));
+            throw new CommandException(
+                I18n.translate("brigadier.exceptions.commands.autoCompleteMethodNotPublic",
+                    autoComplete.method(), method.getName()));
           }
           autoCompleteMap.put(autoComplete.parameterName(), autoCompleteFunc);
         } catch (NoSuchMethodException e) {
-          throw new CommandException(I18n.translate("brigadier.exceptions.commands.autoCompleteNotExist",
-              autoComplete.method(), method.getName()));
+          throw new CommandException(
+              I18n.translate("brigadier.exceptions.commands.autoCompleteNotExist",
+                  autoComplete.method(), method.getName()));
         }
       }
     }
@@ -358,8 +374,9 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         String parameterName = renamer.apply(parameter.getName());
         argumentType = argumentTypeFactory(parameter);
         if (argumentType == null) {
-          throw new CommandException(I18n.translate("brigadier.exceptions.commands.unsupportedArgumentType",
-              parameter.getName(), parameter.getType()));
+          throw new CommandException(
+              I18n.translate("brigadier.exceptions.commands.unsupportedArgumentType",
+                  parameter.getName(), parameter.getType()));
         }
 
         RequiredArgumentBuilder<SharedSuggestionProvider, ?> requiredArgumentBuilder =
@@ -385,7 +402,8 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           canExec = false;
         } else {
           if (encounteredNonOptional) {
-            throw new CommandException(I18n.translate("brigadier.exceptions.commands.optionalBeforeNone", method));
+            throw new CommandException(
+                I18n.translate("brigadier.exceptions.commands.optionalBeforeNone", method));
           }
         }
       }
@@ -435,7 +453,8 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
           try {
             comp = errorComponent.invoke(commandClass);
           } catch (InvocationTargetException | IllegalAccessException e) {
-            logger.warn(I18n.translate("brigadier.exceptions.commands.errorMethodCannotInvoke", errorComponent, check), e);
+            logger.warn(I18n.translate("brigadier.exceptions.commands.errorMethodCannotInvoke",
+                errorComponent, check), e);
             return 1;
           }
 
@@ -443,7 +462,9 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
             chatExecutor.displayClientMessage((VersionedTextComponent) comp);
             return 1;
           }
-          logger.warn(I18n.translate("brigadier.exceptions.commands.errorMethodWrongType", errorComponent, comp.getClass()));
+          logger.warn(
+              I18n.translate("brigadier.exceptions.commands.errorMethodWrongType", errorComponent,
+                  comp.getClass()));
           return 1;
         }
       }
@@ -455,62 +476,32 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
         .filter(par -> !par.getType().equals(commandClass.getCommandContextClass()))
         .forEach(par -> {
           String name = renamer.apply(par.getName());
-          try {
-            Object obj;
-            Class<?> clazz = par.getType();
-            if (VersionedCommandService.get().isCustomArgument(clazz)) {
-              Method classGetter = clazz.getMethod("getClassType");
-              Object returnValue = classGetter.invoke(clazz);
-              Class<?> returnClass = (Class<?>) returnValue;
-
-              Constructor<?> constructor = clazz.getConstructor(returnClass);
-              obj = constructor.newInstance(ctx.getArgument(name, returnClass));
+          Object obj;
+          Class<?> clazz = par.getType();
+          if (VersionedCommandService.get().isCustomArgument(clazz)) {
+            obj = constructCustomArgumentFromContext(clazz, ctx, name);
+          } else if (clazz.isArray()) {
+            Object[] array = getArgument(Object[].class, ctx, name);
+            if (array == null) {
+              obj = null;
             } else {
-              if (par.getType().isArray()) {
-                Object[] arr = ctx.getArgument(name, Object[].class);
-                obj =  Arrays.stream(arr).map((el) -> {
-                  if (VersionedCommandService.get().isCustomArgument(par.getType().getComponentType())) {
-                    try {
-                      Class<?> clazzz = par.getType().getComponentType();
-                      Method classGetter = clazzz.getMethod("getClassType");
-                      Object returnValue = classGetter.invoke(clazzz);
-                      Class<?> returnClass = (Class<?>) returnValue;
-
-                      Constructor<?> constructor = clazzz.getConstructor(returnClass);
-                      return constructor.newInstance(el);
-                    } catch (IllegalArgumentException | InstantiationException e) {
-                      logger.warn(I18n.translate("brigadier.exceptions.commands.cannotGetArgument", par, e.getClass()), e);
-                      return null;
-                    } catch (NoSuchMethodException | InvocationTargetException |
-                             IllegalAccessException invalidException) {
-                      logger.error(I18n.translate("brigadier.exceptions.commands.impossibleError", invalidException.getClass()));
-                      return null;
-                    }
-                  } else {
-                   return par.getType().getComponentType().cast(el);
-                  }})
-                    .toArray(size -> (Object[]) Array.newInstance(par.getType().getComponentType(), arr.length));
-              } else {
-                obj = ctx.getArgument(name, par.getType());
-              }
-
+              obj = Arrays.stream(array)
+                  .map(arrayMapper(clazz.getComponentType()))
+                  .toArray(size -> (Object[]) Array.newInstance(clazz.getComponentType(), array.length));
             }
-            values.add(obj);
-          } catch (IllegalArgumentException | InstantiationException e) {
-            logger.warn(I18n.translate("brigadier.exceptions.commands.cannotGetArgument", par, e.getClass()), e);
-            values.add(null);
-          } catch (NoSuchMethodException | InvocationTargetException |
-                   IllegalAccessException invalidException) {
-            logger.error(I18n.translate("brigadier.exceptions.commands.impossibleError", invalidException.getClass()));
+          } else {
+            obj = getArgument(clazz, ctx, name);
           }
+          values.add(obj);
         });
     Object re;
     try {
       re = method.invoke(commandClass, values.toArray());
     } catch (Exception e) {
       logger.error(I18n.translate("brigadier.exceptions.commands.commandCannotInvoke"), e);
-      chatExecutor.displayClientMessage(Component.translatable("brigadier.exceptions.commands.defaultError",
-          NamedTextColor.RED));
+      chatExecutor.displayClientMessage(
+          Component.translatable("brigadier.exceptions.commands.defaultError",
+              NamedTextColor.RED));
       return 1;
     }
     return Utils.typeIsBool(re.getClass()) ? (Boolean) re ? 1 : 0 : 0;
