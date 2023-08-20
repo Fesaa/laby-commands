@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import art.ameliah.laby.addons.library.commands.core.models.types.defaults.player.PlayerType;
 import net.labymod.api.client.component.Component;
 import net.labymod.api.client.component.format.NamedTextColor;
 import net.labymod.api.client.entity.player.ClientPlayer;
@@ -32,6 +33,15 @@ public class TestCommands extends CommandClass<MyCustomCommandContext> {
   @Override
   public @NotNull Class<MyCustomCommandContext> getCommandContextClass() {
     return MyCustomCommandContext.class;
+  }
+
+  @Command
+  public boolean playerList(MyCustomCommandContext ctx, PlayerType[] players) {
+    ctx.displayClientMessage("Players: " + Arrays.stream(players)
+        .map(PlayerType::get)
+        .map(el -> " " + el)
+        .collect(Collectors.joining()));
+    return true;
   }
 
   @Command

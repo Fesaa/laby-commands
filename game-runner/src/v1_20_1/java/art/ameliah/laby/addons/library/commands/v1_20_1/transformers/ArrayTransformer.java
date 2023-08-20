@@ -10,11 +10,17 @@ import art.ameliah.laby.addons.library.commands.core.service.CommandService;
 import art.ameliah.laby.addons.library.commands.core.utils.Utils;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestion;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 public class ArrayTransformer {
 
@@ -68,6 +74,52 @@ public class ArrayTransformer {
         }
         reader.setCursor(cursor - 1);
         return (T[]) list.toArray();
+      }
+
+      // This works and gives the right suggestions, but it's not user-friendly
+      // as we opted for the consume till fail above
+      @Override
+      public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context, final SuggestionsBuilder builder) {
+        Function<String, Boolean> check = (s) -> {
+          try {
+            inner.parse(new StringReader(s));
+            return true;
+          } catch (CommandSyntaxException e) {
+            return false;
+          }
+        };
+
+        String left = builder.getRemaining();
+        String[] parts = left.split(" ");
+
+        String start = "";
+        int cursor = 0;
+
+
+        for (String part: parts) {
+          if (!check.apply(part)) {
+            break;
+          }
+          start += " " + part;
+          cursor += part.length() + 1;
+        }
+
+        SuggestionsBuilder suggestionsBuilder = new SuggestionsBuilder(left, Math.max(cursor - 1, 0));
+        CompletableFuture<Suggestions> suggestions = inner.listSuggestions(context, suggestionsBuilder);
+
+        Suggestions result = suggestions.getNow(null);
+        if (result == null) {
+          return Suggestions.empty();
+        }
+
+        start = start.trim();
+        start = start.isEmpty() ? start : start + " ";
+
+        for (Suggestion suggestion : result.getList()) {
+          builder.suggest(start + suggestion.getText());
+        }
+
+        return builder.buildFuture();
       }
     };
   }

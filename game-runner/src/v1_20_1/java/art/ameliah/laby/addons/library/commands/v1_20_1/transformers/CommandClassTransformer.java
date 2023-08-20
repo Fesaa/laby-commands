@@ -155,8 +155,6 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
               I18n.translate("brigadier.exceptions.commands.greedyNotLast", method));
         }
         if (!parameter.getType().equals(String.class)) {
-          // Skipping as wrong impl anyway
-          // TODO: Greedy should repeat any, not capture all text
           throw new CommandException("Greedy can only be used on Strings. (%s)", method);
         }
       }
