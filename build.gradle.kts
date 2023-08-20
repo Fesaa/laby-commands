@@ -57,16 +57,12 @@ fun configureRun(provider: net.labymod.gradle.core.minecraft.provider.VersionPro
         jvmArgs("-Dnet.labymod.debugging.all=true")
         jvmArgs("-Dmixin.env.disableRefMap=true")
 
-        args("--tweakClass", "net.labymod.core.loader.vanilla.launchwrapper.LabyModLaunchWrapperTweaker")
+        args("--tweakClass", "net.labymod.core.loader.vanilla.launchwrapper.Java17LabyModLaunchWrapperTweaker")
         args("--labymod-dev-environment", "true")
         args("--addon-dev-environment", "true")
     }
 
-    provider.javaVersion = when (gameVersion) {
-        else -> {
-            JavaVersion.VERSION_17
-        }
-    }
+    provider.javaVersion = JavaVersion.VERSION_17
 
     provider.mixin {
         val mixinMinVersion = when (gameVersion) {
