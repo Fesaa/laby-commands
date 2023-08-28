@@ -2,7 +2,6 @@ package art.ameliah.laby.addons.library.commands.v1_20_1.mixins;
 
 import art.ameliah.laby.addons.library.commands.v1_20_1.VersionedCommandService;
 import art.ameliah.laby.addons.library.commands.v1_20_1.transformers.ContextTransformer;
-import art.ameliah.laby.addons.library.commands.v1_20_1.wrappers.McCommand;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.commands.SharedSuggestionProvider;

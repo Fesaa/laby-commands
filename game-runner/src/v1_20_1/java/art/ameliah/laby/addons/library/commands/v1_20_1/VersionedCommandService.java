@@ -17,6 +17,7 @@ import net.labymod.api.models.Implements;
 import net.labymod.api.util.I18n;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +81,15 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
       }
     }
     return CommandType.SERVER;
+  }
+
+  public @Nullable McCommand<T> getCommand(String root) {
+    for (McCommand<T> cmd : this.commandList) {
+      if (cmd.getLiteral().equals(root)) {
+        return cmd.isInjected() ? cmd : null;
+      }
+    }
+    return null;
   }
 
   @Override
