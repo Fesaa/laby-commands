@@ -37,6 +37,12 @@ public class TestCommands extends CommandClass<MyCustomCommandContext> {
     return MyCustomCommandContext.class;
   }
 
+  @Command(injectCommand = true)
+  public boolean time(MyCustomCommandContext ctx, int time) {
+    ctx.displayClientMessage("LOL: " + time);
+    return true;
+  }
+
   @Command
   public boolean playerList(MyCustomCommandContext ctx, NetworkPlayerType[] players) {
     ctx.displayClientMessage("Players: " + Arrays.stream(players)

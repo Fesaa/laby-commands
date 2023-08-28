@@ -2,6 +2,7 @@ package art.ameliah.laby.addons.library.commands.v1_20_1.mixins;
 
 import art.ameliah.laby.addons.library.commands.v1_20_1.VersionedCommandService;
 import art.ameliah.laby.addons.library.commands.v1_20_1.transformers.ContextTransformer;
+import art.ameliah.laby.addons.library.commands.v1_20_1.wrappers.McCommand;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -24,7 +25,13 @@ public class ClientPacketListenerMixin {
         .stream()
         .filter(cmd -> cmd.shouldRegister(
             ContextTransformer.createCorrectCtx(null, null, cmd.getCommandContextClass())))
-        .forEach(commands::register);
+        .forEach(cmd -> {
+          if (cmd.isInjected()) {
+            VersionedCommandService.get().injectDispatcher.register(cmd);
+          } else {
+            commands.register(cmd);
+          }
+        });
     VersionedCommandService.get().dispatcher = commands;
   }
 

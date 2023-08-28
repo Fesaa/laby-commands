@@ -12,8 +12,8 @@ public class DefaultCommandService<T extends CommandContext> extends CommandServ
   }
 
   @Override
-  public boolean isCustomCommand(String root) {
-    return false;
+  public CommandType getCommandType(String root) {
+    return CommandType.SERVER;
   }
 
   @Override

@@ -63,7 +63,7 @@ public abstract class CommandService<T extends CommandContext> {
    */
   public abstract boolean registerCommand(@NotNull CommandClass<T> commandClass);
 
-  public abstract boolean isCustomCommand(String root);
+  public abstract CommandType getCommandType(String root);
 
   /**
    * Will only go in effect on the next server join.
@@ -72,5 +72,11 @@ public abstract class CommandService<T extends CommandContext> {
 
   public List<CommandClass<T>> getCommandClasses() {
     return commandClasses;
+  }
+
+  public enum CommandType {
+    SERVER,
+    CUSTOM,
+    INJECT
   }
 }

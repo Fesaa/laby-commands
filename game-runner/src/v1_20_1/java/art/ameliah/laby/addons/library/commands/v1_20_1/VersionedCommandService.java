@@ -26,9 +26,11 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
 
   private static final Logger logger = LoggerFactory.getLogger(VersionedCommandService.class);
   private static VersionedCommandService<?> instance;
+
+  public CommandDispatcher<SharedSuggestionProvider> dispatcher;
+  public CommandDispatcher<SharedSuggestionProvider> injectDispatcher = new CommandDispatcher<>();
   private final List<McCommand<T>> commandList = new ArrayList<>();
   private final HashMap<CommandClass<T>, List<McCommand<T>>> transformerHashMap = new HashMap<>();
-  public CommandDispatcher<SharedSuggestionProvider> dispatcher;
 
   @Inject
   public VersionedCommandService() {
@@ -71,13 +73,13 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
   }
 
   @Override
-  public boolean isCustomCommand(String root) {
+  public CommandType getCommandType(String root) {
     for (McCommand<T> cmd : this.commandList) {
       if (cmd.getLiteral().equals(root)) {
-        return true;
+      return cmd.isInjected() ? CommandType.INJECT : CommandType.CUSTOM;
       }
     }
-    return false;
+    return CommandType.SERVER;
   }
 
   @Override
