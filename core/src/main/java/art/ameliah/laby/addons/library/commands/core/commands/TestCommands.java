@@ -45,7 +45,7 @@ public class TestCommands extends CommandClass<MyCustomCommandContext> {
   }
 
   public String[] autocompleteTimes(MyCustomCommandContext ctx) {
-    return new String[]{"what's this?"};
+    return new String[]{"what"};
   }
 
 
