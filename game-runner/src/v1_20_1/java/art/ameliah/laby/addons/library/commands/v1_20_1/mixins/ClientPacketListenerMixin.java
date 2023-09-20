@@ -24,7 +24,13 @@ public class ClientPacketListenerMixin {
         .stream()
         .filter(cmd -> cmd.shouldRegister(
             ContextTransformer.createCorrectCtx(null, null, cmd.getCommandContextClass())))
-        .forEach(commands::register);
+        .forEach(cmd -> {
+          if (cmd.isInjected()) {
+            VersionedCommandService.get().injectDispatcher.register(cmd);
+          } else {
+            commands.register(cmd);
+          }
+        });
     VersionedCommandService.get().dispatcher = commands;
   }
 

@@ -11,12 +11,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.labymod.api.models.Implements;
 import net.labymod.api.util.I18n;
 import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +28,11 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
 
   private static final Logger logger = LoggerFactory.getLogger(VersionedCommandService.class);
   private static VersionedCommandService<?> instance;
+
+  public CommandDispatcher<SharedSuggestionProvider> dispatcher;
+  public CommandDispatcher<SharedSuggestionProvider> injectDispatcher = new CommandDispatcher<>();
   private final List<McCommand<T>> commandList = new ArrayList<>();
   private final HashMap<CommandClass<T>, List<McCommand<T>>> transformerHashMap = new HashMap<>();
-  public CommandDispatcher<SharedSuggestionProvider> dispatcher;
 
   @Inject
   public VersionedCommandService() {
@@ -71,13 +75,22 @@ public class VersionedCommandService<T extends CommandContext> extends CommandSe
   }
 
   @Override
-  public boolean isCustomCommand(String root) {
+  public CommandType getCommandType(String root) {
     for (McCommand<T> cmd : this.commandList) {
       if (cmd.getLiteral().equals(root)) {
-        return true;
+      return cmd.isInjected() ? CommandType.INJECT : CommandType.CUSTOM;
       }
     }
-    return false;
+    return CommandType.SERVER;
+  }
+
+  public @Nullable McCommand<T> getCommand(String root) {
+    for (McCommand<T> cmd : this.commandList) {
+      if (cmd.getLiteral().equals(root)) {
+        return cmd.isInjected() ? cmd : null;
+      }
+    }
+    return null;
   }
 
   @Override

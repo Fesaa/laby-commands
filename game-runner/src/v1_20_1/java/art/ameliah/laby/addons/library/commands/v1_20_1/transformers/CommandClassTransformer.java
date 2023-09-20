@@ -33,6 +33,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -327,8 +328,10 @@ public class CommandClassTransformer<T extends CommandClass<S>, S extends art.am
       @NotNull Method method) throws CommandException {
     validateMethod(method);
 
+    Command annotation = method.getAnnotation(Command.class);
     McCommand<S> cmd = McCommand.literal(method.getName(), commandClass::shouldRegister,
         commandClass);
+    cmd.setInjected(annotation.injectCommand());
     HashMap<String, Method> autoCompleteMap = new HashMap<>();
 
     if (method.isAnnotationPresent(AutoComplete.class) || method.isAnnotationPresent(

@@ -21,4 +21,6 @@ public @interface Command {
 
   @NotNull String parent() default "";
 
+  boolean injectCommand() default false;
+
 }

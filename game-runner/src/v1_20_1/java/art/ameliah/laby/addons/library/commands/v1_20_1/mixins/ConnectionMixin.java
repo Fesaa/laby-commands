@@ -1,5 +1,6 @@
 package art.ameliah.laby.addons.library.commands.v1_20_1.mixins;
 
+import art.ameliah.laby.addons.library.commands.core.service.CommandService.CommandType;
 import art.ameliah.laby.addons.library.commands.v1_20_1.VersionedCommandService;
 import art.ameliah.laby.addons.library.commands.v1_20_1.wrappers.SharedSuggestionProviderWrapper;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -19,25 +20,39 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ConnectionMixin {
 
   @Inject(method = "sendPacket", at = @At("HEAD"), cancellable = true)
-  public void sendPacketInject(Packet<?> $$0, PacketSendListener $$1, CallbackInfo ci) {
-    if ($$0.getClass().equals(ServerboundChatCommandPacket.class)) {
-      ServerboundChatCommandPacket packet = (ServerboundChatCommandPacket) $$0;
-      String[] parts = packet.command().split(" ");
-      if (parts.length > 0 && VersionedCommandService.get().isCustomCommand(parts[0])) {
-        int result = 1;
-        try {
-          result = VersionedCommandService.get().dispatcher.execute(packet.command(),
-              new SharedSuggestionProviderWrapper());
-        } catch (CommandSyntaxException e) {
-          Minecraft.getInstance().gui.getChat().addMessage(
-              Component.literal(e.getMessage()).withStyle(ChatFormatting.RED));
-        }
-        if (result == 1) {
-          ci.cancel();
-        }
-      }
+  public <S> void sendPacketInject(Packet<?> $$0, PacketSendListener $$1, CallbackInfo ci) {
+    if (!$$0.getClass().equals(ServerboundChatCommandPacket.class)) {
+      return;
     }
 
+    ServerboundChatCommandPacket packet = (ServerboundChatCommandPacket) $$0;
+    String[] parts = packet.command().split(" ");
+    VersionedCommandService<?> service = VersionedCommandService.get();
+    if (parts.length == 0) {
+      return;
+    }
+
+    CommandType commandType = service.getCommandType(parts[0]);
+    if (commandType.equals(CommandType.SERVER)) {
+      return;
+    }
+
+    int result = 1;
+    try {
+      SharedSuggestionProviderWrapper s = new SharedSuggestionProviderWrapper();
+      if (commandType.equals(CommandType.CUSTOM)) {
+        result = service.dispatcher.execute(packet.command(),s);
+      } else {
+        result = service.injectDispatcher.execute(packet.command(), s);
+      }
+    } catch (CommandSyntaxException e) {
+      Minecraft.getInstance().gui.getChat().addMessage(
+          Component.literal(e.getMessage()).withStyle(ChatFormatting.RED));
+    }
+
+    if (result == 1) {
+      ci.cancel();
+    }
   }
 
 }

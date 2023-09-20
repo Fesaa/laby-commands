@@ -12,6 +12,7 @@ public class McCommand<T extends CommandContext> extends
 
   private final Function<T, Boolean> shouldRegisterSupplier;
   private final CommandClass<T> commandClass;
+  private boolean isInjected = false;
 
   protected McCommand(String literal, Function<T, Boolean> supplier, CommandClass<T> commandClass) {
     super(literal);
@@ -34,5 +35,13 @@ public class McCommand<T extends CommandContext> extends
 
   public Class<T> getCommandContextClass() {
     return commandClass.getCommandContextClass();
+  }
+
+  public boolean isInjected() {
+    return isInjected;
+  }
+
+  public void setInjected(boolean injected) {
+    isInjected = injected;
   }
 }

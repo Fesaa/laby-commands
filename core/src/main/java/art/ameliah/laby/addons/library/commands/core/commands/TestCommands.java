@@ -37,6 +37,19 @@ public class TestCommands extends CommandClass<MyCustomCommandContext> {
     return MyCustomCommandContext.class;
   }
 
+  @Command(injectCommand = true)
+  @AutoComplete(method = "autocompleteTimes", parameterName = "arg1")
+  public boolean time(MyCustomCommandContext ctx, String time) {
+    ctx.displayClientMessage("LOL: " + time);
+    return true;
+  }
+
+  public String[] autocompleteTimes(MyCustomCommandContext ctx) {
+    return new String[]{"what"};
+  }
+
+
+
   @Command
   public boolean playerList(MyCustomCommandContext ctx, NetworkPlayerType[] players) {
     ctx.displayClientMessage("Players: " + Arrays.stream(players)
