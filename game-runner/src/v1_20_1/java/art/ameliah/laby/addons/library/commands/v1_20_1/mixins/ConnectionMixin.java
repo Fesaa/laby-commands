@@ -11,13 +11,20 @@ import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
+import org.slf4j.Logger;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Connection.class)
 public class ConnectionMixin {
+
+  @Shadow
+  @Final
+  private static Logger LOGGER;
 
   @Inject(method = "sendPacket", at = @At("HEAD"), cancellable = true)
   public <S> void sendPacketInject(Packet<?> $$0, PacketSendListener $$1, CallbackInfo ci) {
@@ -38,18 +45,22 @@ public class ConnectionMixin {
     }
 
     int result = 1;
-    try {
-      SharedSuggestionProviderWrapper s = new SharedSuggestionProviderWrapper();
-      if (commandType.equals(CommandType.CUSTOM)) {
+    SharedSuggestionProviderWrapper s = new SharedSuggestionProviderWrapper();
+    if (commandType.equals(CommandType.CUSTOM)) {
+      try {
         result = service.dispatcher.execute(packet.command(),s);
-      } else {
-        result = service.injectDispatcher.execute(packet.command(), s);
+      } catch (CommandSyntaxException e) {
+        Minecraft.getInstance().gui.getChat().addMessage(
+            Component.literal(e.getMessage()).withStyle(ChatFormatting.RED));
       }
-    } catch (CommandSyntaxException e) {
-      Minecraft.getInstance().gui.getChat().addMessage(
-          Component.literal(e.getMessage()).withStyle(ChatFormatting.RED));
+    } else {
+      result = 0;
+      try {
+        result = service.injectDispatcher.execute(packet.command(),s);
+      } catch (CommandSyntaxException e) {
+        LOGGER.error(e.getMessage());
+      }
     }
-
     if (result == 1) {
       ci.cancel();
     }
